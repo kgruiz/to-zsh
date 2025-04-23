@@ -140,3 +140,26 @@ function to {
 
     esac
 }
+
+# Zsh completion for `to`
+if [[ -n $ZSH_VERSION ]]; then
+
+    _to() {
+
+        local state
+        typeset -A opt_args
+        _arguments \
+            '1:command:->cmds' \
+            '*:keyword:->keywords'
+
+        case $state in
+            cmds)
+                compadd -- --help -h --list -l --add -a --rm -r
+                ;;
+            keywords)
+                compadd -- "${(@f)$(cut -d= -f1 "${CONFIG_FILE}")}"
+                ;;
+        esac
+    }
+    compdef _to to
+fi

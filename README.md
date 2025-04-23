@@ -8,7 +8,8 @@ Eliminate the need to repeatedly type lengthy directory paths. With `to-zsh`, as
 
 - **Keyword-Based Navigation:** Assign concise keywords to directory paths.
 - **Instant Directory Switching:** Navigate quickly using the `to <keyword>` command.
-- **Simple Shortcut Management:** Easily add (`--add`), remove (`--rm`), and list (`--list`) your shortcuts.
+- **Shell Autocomplete:** Tab-completion for commands and saved keywords.
+- **Simple Shortcut Management:** Easily add (`--add`/`-a`), remove (`--rm`/`-r`), and list (`--list`/`-l`) your shortcuts.
 - **Persistent Storage:** Shortcuts are stored in `~/.to_dirs`, ensuring they persist across shell sessions.
 - **Lightweight Integration:** Implemented as a single Zsh script file.
 - **Informative Output:** Utilizes clear, color-coded feedback.
@@ -20,34 +21,32 @@ Eliminate the need to repeatedly type lengthy directory paths. With `to-zsh`, as
 
     ```bash
     # Option 1: Clone the repository
-    git clone <repository_url> ~/.config/zsh/plugins/to-zsh
+    git clone https://github.com/kgruiz/to-zsh.git ~/.config/zsh/plugins/to-zsh
 
     # Option 2: Create the directory and download the file
-    # mkdir -p ~/.config/zsh/plugins/to-zsh
-    # curl -o ~/.config/zsh/plugins/to-zsh/to.zsh <raw_url_to_to.zsh>
+    mkdir -p ~/.config/zsh/plugins/to-zsh
+    curl -o ~/.config/zsh/plugins/to-zsh/to.zsh https://raw.githubusercontent.com/kgruiz/to-zsh/main/to.zsh
     ```
-
-    _(Replace `<repository_url>` and `<raw_url_to_to.zsh>` with the actual URLs)_
 
 2.  **Source the Script in `.zshrc`**
     Add the following snippet to your `~/.zshrc` configuration file. Adjust `TO_FUNC_PATH` to the actual location where you placed `to.zsh`.
 
     ```bash
-    # Set the path to your to.zsh script
+    # init zsh completion
+    autoload -Uz compinit
+    compinit
+
+    # load to-zsh
     TO_FUNC_PATH="$HOME/.config/zsh/plugins/to-zsh/to.zsh"
-
     if [ -f "$TO_FUNC_PATH" ]; then
-        if ! source "$TO_FUNC_PATH" 2>/dev/null; then
-
-            echo "Error: Failed to source 'to.zsh'. Verify the file's path and integrity." >&2
-        fi
+        source "$TO_FUNC_PATH" 2>/dev/null \
+          || echo "Error: failed to source to.zsh" >&2
     else
-        echo "Error: 'to.zsh' not found at $TO_FUNC_PATH. Please ensure the file exists." >&2
+        echo "Error: to.zsh not found at $TO_FUNC_PATH" >&2
     fi
     ```
 
 3.  **Apply Changes**
-    Either restart your Zsh shell or source your updated configuration:
     ```bash
     source ~/.zshrc
     ```
@@ -57,7 +56,6 @@ Eliminate the need to repeatedly type lengthy directory paths. With `to-zsh`, as
 The `to` command facilitates shortcut management and execution.
 
 **1. Adding a Shortcut**
-
 Register a new shortcut using `to --add <keyword> <absolute_path>` or the shorthand `to -a <keyword> <absolute_path>`. The specified path must be absolute and correspond to an existing directory.
 
 ```bash
@@ -66,7 +64,6 @@ Added proj → ~/Development/my-project
 ```
 
 **2. Jumping to a Saved Directory**
-
 Navigate to a directory associated with a keyword using `to <keyword>`.
 
 ```bash
@@ -78,7 +75,6 @@ Changed directory to ~/Development/my-project
 ```
 
 **3. Listing Saved Shortcuts**
-
 Display all currently registered shortcuts with `to --list` or `to -l`.
 
 ```bash
@@ -90,7 +86,6 @@ dotfiles → ~/Repositories/dotfiles
 ```
 
 **4. Removing a Shortcut**
-
 Delete an existing shortcut using `to --rm <keyword>` or `to -r <keyword>`.
 
 ```bash
@@ -99,7 +94,6 @@ Removed docs.
 ```
 
 **5. Displaying Help Information**
-
 View the command usage and options with `to --help` or `to -h`.
 
 ```bash
@@ -115,10 +109,10 @@ Usage:
 
 Commands:
   keyword      Jump to saved directory
-  --add, -a  Save new shortcut
-  --rm, -r   Remove shortcut
-  --list, -l List shortcuts
-  --help, -h Show this help
+  --add, -a    Save new shortcut
+  --rm, -r     Remove shortcut
+  --list, -l   List shortcuts
+  --help, -h   Show this help
 ```
 
 ## Configuration Details
@@ -133,9 +127,5 @@ Contributions, bug reports, and feature suggestions are welcome. Please refer to
 
 ## License
 
-This project is distributed under the terms of the **GNU General Public License v3.0**.
-
-Copyright (C) 2007 Free Software Foundation, Inc. <https://fsf.org/>
-Everyone is permitted to copy and distribute verbatim copies of this license document, but changing it is not allowed.
-
-For the full license text, please refer to the [LICENSE](LICENSE) file included in the repository or visit <https://www.gnu.org/licenses/gpl-3.0.html>.
+Distributed under the **GNU GPL v3.0**.
+See [LICENSE](LICENSE) or <https://www.gnu.org/licenses/gpl-3.0.html> for details.
