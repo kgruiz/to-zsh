@@ -4,7 +4,7 @@
 
 Eliminate the need to repeatedly type lengthy directory paths. With `to-zsh`, assign memorable keywords to frequently accessed directories and jump to them instantly.
 
-✨ **Key Features**
+## Key Features
 
 - **Keyword-Based Navigation:** Assign concise keywords to directory paths.
 - **Instant Directory Switching:** Navigate quickly using the `to <keyword>` command.
@@ -13,7 +13,7 @@ Eliminate the need to repeatedly type lengthy directory paths. With `to-zsh`, as
 - **Lightweight Integration:** Implemented as a single Zsh script file.
 - **Informative Output:** Utilizes clear, color-coded feedback.
 
-💾 **Installation**
+## Installation
 
 1.  **Clone the Repository (or Download `to.zsh`)**
     Choose a location for the script (e.g., `~/.config/zsh/plugins/to-zsh`).
@@ -52,7 +52,7 @@ Eliminate the need to repeatedly type lengthy directory paths. With `to-zsh`, as
     source ~/.zshrc
     ```
 
-💡 **Usage Guide**
+## Usage Guide
 
 The `to` command facilitates shortcut management and execution.
 
@@ -121,17 +121,17 @@ Commands:
   --help, -h Show this help
 ```
 
-⚙️ **Configuration Details**
+## Configuration Details
 
 - Directory shortcuts are stored line by line in the `~/.to_dirs` file.
 - Each line follows the format: `keyword=absolute_path`.
 - While direct editing of `~/.to_dirs` is possible, using the `to --add` and `to --rm` commands ensures proper formatting and validation.
 
-🤝 **Contributing**
+## Contributing
 
 Contributions, bug reports, and feature suggestions are welcome. Please refer to the repository's [issues tracker](https://github.com/kgruiz/to-zsh/issues) for ongoing development and discussion.
 
-📜 **License**
+## License
 
 This project is distributed under the terms of the **GNU General Public License v3.0**.
 
