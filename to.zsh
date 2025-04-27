@@ -19,10 +19,10 @@ function ShowHelp {
 
     printf "${MAGENTA}Usage:${RESET}\n"
     printf "  ${DIM_WHITE}to <keyword>${RESET}\n"
-    printf "  ${DIM_WHITE}to --add <keyword> <path>${RESET}\n"
-    printf "  ${DIM_WHITE}to --rm <keyword>${RESET}\n"
-    printf "  ${DIM_WHITE}to --list${RESET}\n"
-    printf "  ${DIM_WHITE}to --help${RESET}\n\n"
+    printf "  ${DIM_WHITE}to --add, -a <keyword> <path>${RESET}\n"
+    printf "  ${DIM_WHITE}to --rm, -r <keyword>${RESET}\n"
+    printf "  ${DIM_WHITE}to --list, -l${RESET}\n"
+    printf "  ${DIM_WHITE}to --help, -h${RESET}\n\n"
 
     printf "${MAGENTA}Commands:${RESET}\n"
     printf "  ${BOLD_CYAN}keyword${RESET}      Jump to saved directory\n"

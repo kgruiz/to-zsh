@@ -104,10 +104,10 @@ to - Persistent Directory Shortcuts
 
 Usage:
   to <keyword>
-  to --add <keyword> <path>
-  to --rm <keyword>
-  to --list
-  to --help
+  to --add, -a <keyword> <path>
+  to --rm, -r <keyword>
+  to --list, -l
+  to --help, -h
 
 Commands:
   keyword      Jump to saved directory
