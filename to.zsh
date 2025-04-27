@@ -11,7 +11,7 @@ if [[ -z $BOLD_RED ]]; then readonly BOLD_RED="${ESC}[1;31m"; fi
 if [[ -z $YELLOW ]]; then readonly YELLOW="${ESC}[0;33m"; fi
 if [[ -z $MAGENTA ]]; then readonly MAGENTA="${ESC}[0;35m"; fi
 
-readonly CONFIG_FILE="${HOME}/.to_dirs"
+CONFIG_FILE="${HOME}/.to_dirs"
 
 # Show usage/help
 function ShowHelp {
