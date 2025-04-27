@@ -40,11 +40,14 @@ Eliminate the need to repeatedly type lengthy directory paths. With `to-zsh`, as
     # load to-zsh
     TO_FUNC_PATH="$HOME/.config/zsh/plugins/to-zsh/to.zsh"
     if [ -f "$TO_FUNC_PATH" ]; then
-        source "$TO_FUNC_PATH" 2>/dev/null \
-          || echo "Error: failed to source to.zsh" >&2
+      if ! . "$TO_FUNC_PATH" 2>&1; then
+        echo "Error: Failed to source \"$(basename "$TO_FUNC_PATH")\"" >&2
+      fi
     else
-        echo "Error: to.zsh not found at $TO_FUNC_PATH" >&2
+      echo "Error: \"$(basename "$TO_FUNC_PATH")\" not found at:" >&2
+      echo "  $TO_FUNC_PATH" >&2
     fi
+    unset TO_FUNC_PATH
     ```
 
 3. **Apply Changes**
