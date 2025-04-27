@@ -50,22 +50,24 @@ function AddShortcut {
     local targetPath="$2"
 
     if [ -z "${keyword}" ] || [ -z "${targetPath}" ]; then
-        printf "${BOLD_RED}Usage: to --add <keyword> <absolute_path>${RESET}\n"
+        printf "${BOLD_RED}Usage: to --add <keyword> <path>${RESET}\n"
         return
     fi
 
-    if [[ "${targetPath}" != /* ]] || [ ! -d "${targetPath}" ]; then
-        printf "${BOLD_RED}Error: Path must be absolute and exist.${RESET}\n"
+    if [ ! -d "${targetPath}" ]; then
         return
     fi
+
+    local absPath
+    absPath=$(cd "${targetPath}" && pwd)
 
     if grep -q "^${keyword}=" "${CONFIG_FILE}" 2>/dev/null; then
         printf "${BOLD_RED}Error: Keyword '%s' already exists.${RESET}\n" "${keyword}"
         return
     fi
 
-    echo "${keyword}=${targetPath}" >>"${CONFIG_FILE}"
-    printf "${GREEN}Added ${BOLD_CYAN}%s${RESET}${GREEN} → ${DIM_WHITE}%s${RESET}\n" "${keyword}" "${targetPath}"
+    echo "${keyword}=${absPath}" >>"${CONFIG_FILE}"
+    printf "${GREEN}Added ${BOLD_CYAN}%s${RESET}${GREEN} → ${DIM_WHITE}%s${RESET}\n" "${keyword}" "${absPath}"
 }
 
 # Remove an existing shortcut

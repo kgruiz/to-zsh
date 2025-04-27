@@ -10,13 +10,14 @@ Eliminate the need to repeatedly type lengthy directory paths. With `to-zsh`, as
 - **Instant Directory Switching:** Navigate quickly using the `to <keyword>` command.
 - **Shell Autocomplete:** Tab-completion for commands and saved keywords.
 - **Simple Shortcut Management:** Easily add (`--add`/`-a`), remove (`--rm`/`-r`), and list (`--list`/`-l`) your shortcuts.
+- **Relative Path Support:** Accepts relative or absolute directory paths, resolving relative paths to their absolute form automatically.
 - **Persistent Storage:** Shortcuts are stored in `~/.to_dirs`, ensuring they persist across shell sessions.
 - **Lightweight Integration:** Implemented as a single Zsh script file.
 - **Informative Output:** Utilizes clear, color-coded feedback.
 
 ## Installation
 
-1.  **Clone the Repository (or Download `to.zsh`)**
+1. **Clone the Repository (or Download `to.zsh`)**
     Choose a location for the script (e.g., `~/.config/zsh/plugins/to-zsh`).
 
     ```bash
@@ -28,7 +29,7 @@ Eliminate the need to repeatedly type lengthy directory paths. With `to-zsh`, as
     curl -o ~/.config/zsh/plugins/to-zsh/to.zsh https://raw.githubusercontent.com/kgruiz/to-zsh/main/to.zsh
     ```
 
-2.  **Source the Script in `.zshrc`**
+2. **Source the Script in `.zshrc`**
     Add the following snippet to your `~/.zshrc` configuration file. Adjust `TO_FUNC_PATH` to the actual location where you placed `to.zsh`.
 
     ```bash
@@ -46,7 +47,8 @@ Eliminate the need to repeatedly type lengthy directory paths. With `to-zsh`, as
     fi
     ```
 
-3.  **Apply Changes**
+3. **Apply Changes**
+
     ```bash
     source ~/.zshrc
     ```
@@ -56,11 +58,11 @@ Eliminate the need to repeatedly type lengthy directory paths. With `to-zsh`, as
 The `to` command facilitates shortcut management and execution.
 
 **1. Adding a Shortcut**
-Register a new shortcut using `to --add <keyword> <absolute_path>` or the shorthand `to -a <keyword> <absolute_path>`. The specified path must be absolute and correspond to an existing directory.
+Register a new shortcut using `to --add <keyword> <path>` or the shorthand `to -a <keyword> <path>`. The specified path can be relative or absolute; relative paths will be resolved to their absolute form automatically.
 
 ```bash
-❯ to --add proj ~/Development/my-project
-Added proj → ~/Development/my-project
+❯ to --add proj ../my-project
+Added proj → ../my-project
 ```
 
 **2. Jumping to a Saved Directory**
