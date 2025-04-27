@@ -25,7 +25,7 @@ function ShowHelp {
     printf "  ${DIM_WHITE}to --help, -h${RESET}\n\n"
 
     printf "${MAGENTA}Commands:${RESET}\n"
-    printf "  ${BOLD_CYAN}keyword${RESET}      Jump to saved directory\n"
+    printf "  ${BOLD_CYAN}keyword${RESET}    Jump to saved directory\n"
     printf "  ${BOLD_CYAN}--add, -a${RESET}  Save new shortcut\n"
     printf "  ${BOLD_CYAN}--rm, -r${RESET}   Remove shortcut\n"
     printf "  ${BOLD_CYAN}--list, -l${RESET} List shortcuts\n"
