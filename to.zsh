@@ -1,14 +1,15 @@
 # Persistent Directory Shortcuts – `to` command
 
-readonly ESC="\033"
-readonly RESET="${ESC}[0m"
-readonly BOLD_CYAN="${ESC}[1;36m"
-readonly DIM_WHITE="${ESC}[2;37m"
-readonly DIM_BLUE="${ESC}[2;34m"
-readonly GREEN="${ESC}[0;32m"
-readonly BOLD_RED="${ESC}[1;31m"
-readonly YELLOW="${ESC}[0;33m"
-readonly MAGENTA="${ESC}[0;35m"
+# color codes (only define if not already set)
+if [[ -z $ESC ]]; then readonly ESC="\033"; fi
+if [[ -z $RESET ]]; then readonly RESET="${ESC}[0m"; fi
+if [[ -z $BOLD_CYAN ]]; then readonly BOLD_CYAN="${ESC}[1;36m"; fi
+if [[ -z $DIM_WHITE ]]; then readonly DIM_WHITE="${ESC}[2;37m"; fi
+if [[ -z $DIM_BLUE ]]; then readonly DIM_BLUE="${ESC}[2;34m"; fi
+if [[ -z $GREEN ]]; then readonly GREEN="${ESC}[0;32m"; fi
+if [[ -z $BOLD_RED ]]; then readonly BOLD_RED="${ESC}[1;31m"; fi
+if [[ -z $YELLOW ]]; then readonly YELLOW="${ESC}[0;33m"; fi
+if [[ -z $MAGENTA ]]; then readonly MAGENTA="${ESC}[0;35m"; fi
 
 readonly CONFIG_FILE="${HOME}/.to_dirs"
 
@@ -40,7 +41,7 @@ function ListShortcuts {
 
     while IFS='=' read -r keyword targetPath; do
         printf "${BOLD_CYAN}%s${RESET} → ${DIM_WHITE}%s${RESET}\n" "$keyword" "$targetPath"
-    done < "${CONFIG_FILE}"
+    done <"${CONFIG_FILE}"
 }
 
 # Add a new shortcut
@@ -63,7 +64,7 @@ function AddShortcut {
         return
     fi
 
-    echo "${keyword}=${targetPath}" >> "${CONFIG_FILE}"
+    echo "${keyword}=${targetPath}" >>"${CONFIG_FILE}"
     printf "${GREEN}Added ${BOLD_CYAN}%s${RESET}${GREEN} → ${DIM_WHITE}%s${RESET}\n" "${keyword}" "${targetPath}"
 }
 
@@ -81,7 +82,7 @@ function RemoveShortcut {
         return
     fi
 
-    grep -v "^${keyword}=" "${CONFIG_FILE}" > "${CONFIG_FILE}.tmp" && mv "${CONFIG_FILE}.tmp" "${CONFIG_FILE}"
+    grep -v "^${keyword}=" "${CONFIG_FILE}" >"${CONFIG_FILE}.tmp" && mv "${CONFIG_FILE}.tmp" "${CONFIG_FILE}"
     printf "${GREEN}Removed ${BOLD_CYAN}%s${RESET}${GREEN}.${RESET}\n" "${keyword}"
 }
 
@@ -118,25 +119,25 @@ function to {
 
     case "$1" in
 
-        --help|-h)
-            ShowHelp
-            ;;
+    --help | -h)
+        ShowHelp
+        ;;
 
-        --list|-l)
-            ListShortcuts
-            ;;
+    --list | -l)
+        ListShortcuts
+        ;;
 
-        --add|-a)
-            AddShortcut "$2" "$3"
-            ;;
+    --add | -a)
+        AddShortcut "$2" "$3"
+        ;;
 
-        --rm|-r)
-            RemoveShortcut "$2"
-            ;;
+    --rm | -r)
+        RemoveShortcut "$2"
+        ;;
 
-        *)
-            JumpToShortcut "$1"
-            ;;
+    *)
+        JumpToShortcut "$1"
+        ;;
 
     esac
 }
@@ -153,12 +154,16 @@ if [[ -n $ZSH_VERSION ]]; then
             '*:keyword:->keywords'
 
         case $state in
-            cmds)
-                compadd -- --help -h --list -l --add -a --rm -r
-                ;;
-            keywords)
-                compadd -- "${(@f)$(cut -d= -f1 "${CONFIG_FILE}")}"
-                ;;
+        cmds)
+            compadd -- --help -h --list -l --add -a --rm -r
+            ;;
+        keywords)
+            local -a keywords
+            while IFS='=' read -r key _; do
+                keywords+=("$key")
+            done <"$CONFIG_FILE"
+            compadd -- $keywords
+            ;;
         esac
     }
     compdef _to to
