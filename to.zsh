@@ -94,6 +94,32 @@ function JumpToShortcut {
 
     if [ -z "${keyword}" ]; then
         ShowHelp
+        # show up to 20 saved keywords
+        if [ -r "${CONFIG_FILE}" ]; then
+            local total shown i
+            total=$(wc -l <"${CONFIG_FILE}")
+            if [ "${total}" -le 20 ]; then
+                printf "\n${MAGENTA}Saved shortcuts:${RESET}\n"
+                i=1
+                while IFS='=' read -r key _; do
+                    printf "  ${YELLOW}%2d${RESET}. ${BOLD_CYAN}%s${RESET}\n" \
+                        "${i}" "${key}"
+                    ((i++))
+                done <"${CONFIG_FILE}"
+            else
+                shown=20
+                printf "\n${MAGENTA}Saved shortcuts (showing %d of %d):${RESET}\n" \
+                    "${shown}" "${total}"
+                i=1
+                while IFS='=' read -r key _ && [ "${i}" -le "${shown}" ]; do
+                    printf "  ${YELLOW}%2d${RESET}. ${BOLD_CYAN}%s${RESET}\n" \
+                        "${i}" "${key}"
+                    ((i++))
+                done <"${CONFIG_FILE}"
+                printf "  … and %d more\n" "$((total - shown))"
+            fi
+        fi
+
         return
     fi
 
