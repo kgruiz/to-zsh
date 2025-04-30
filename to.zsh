@@ -39,7 +39,7 @@ function ListShortcuts {
         return
     fi
 
-    while IFS='=' read -r keyword targetPath; do
+    while IFS='=' read -r keyword targetPath || [ -n "$keyword" ]; do
         printf "${BOLD_CYAN}%s${RESET} → ${DIM_WHITE}%s${RESET}\n" "$keyword" "$targetPath"
     done <"${CONFIG_FILE}"
 }
@@ -66,7 +66,7 @@ function AddShortcut {
         return
     fi
 
-    echo "${keyword}=${absPath}" >>"${CONFIG_FILE}"
+    printf '%s\n' "${keyword}=${absPath}" >>"${CONFIG_FILE}"
     printf "${GREEN}Added ${BOLD_CYAN}%s${RESET}${GREEN} → ${DIM_WHITE}%s${RESET}\n" "${keyword}" "${absPath}"
 }
 
@@ -94,20 +94,20 @@ function JumpToShortcut {
 
     if [ -z "${keyword}" ]; then
         ShowHelp
-        # show up to 20 saved keywords
+        # show up to 10 saved keywords
         if [ -r "${CONFIG_FILE}" ]; then
             local total shown i
-            total=$(wc -l <"${CONFIG_FILE}")
-            if [ "${total}" -le 20 ]; then
+            total=$(grep -c '^' "${CONFIG_FILE}")
+            if [ "${total}" -le 10 ]; then
                 printf "\n${MAGENTA}Saved shortcuts:${RESET}\n"
                 i=1
-                while IFS='=' read -r key _; do
+                while IFS='=' read -r key _ || [ -n "$key" ]; do
                     printf "  ${YELLOW}%2d${RESET}. ${BOLD_CYAN}%s${RESET}\n" \
                         "${i}" "${key}"
                     ((i++))
                 done <"${CONFIG_FILE}"
             else
-                shown=20
+                shown=10
                 printf "\n${MAGENTA}Saved shortcuts (showing %d of %d):${RESET}\n" \
                     "${shown}" "${total}"
                 i=1
