@@ -4,6 +4,16 @@
 
 Eliminate the need to repeatedly type lengthy directory paths. With `to-zsh`, assign memorable keywords to frequently accessed directories and jump to them instantly.
 
+## Table of Contents
+
+- [Key Features](#key-features)
+- [Installation](#installation)
+- [Usage Guide](#usage-guide)
+- [Options](#options)
+- [Configuration Details](#configuration-details)
+- [Contributing](#contributing)
+- [License](#license)
+
 ## Key Features
 
 - **Keyword-Based Navigation:** Assign concise keywords to directory paths.
@@ -119,6 +129,15 @@ Commands:
   --list, -l   List shortcuts
   --help, -h   Show this help
 ```
+
+## Options
+
+| Option              | Short | Description                         |
+|---------------------|-------|-------------------------------------|
+| `--add <k> <path>`  | `-a`  | Add a new shortcut `k` → `path`.    |
+| `--rm <k>`          | `-r`  | Remove shortcut associated with `k`.|
+| `--list`            | `-l`  | List all saved shortcuts.           |
+| `--help`            | `-h`  | Show help message and usage.        |
 
 ## Configuration Details
 
