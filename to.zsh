@@ -14,7 +14,7 @@ if [[ -z $MAGENTA ]]; then readonly MAGENTA="${ESC}[0;35m"; fi
 CONFIG_FILE="${HOME}/.to_dirs"
 
 # Show usage/help
-function ShowHelp {
+function To_ShowHelp {
     printf "${YELLOW}to - Persistent Directory Shortcuts${RESET}\n\n"
 
     printf "${MAGENTA}Usage:${RESET}\n"
@@ -93,7 +93,7 @@ function JumpToShortcut {
     local keyword="$1"
 
     if [ -z "${keyword}" ]; then
-        ShowHelp
+        To_ShowHelp
         # show up to 10 saved keywords
         if [ -r "${CONFIG_FILE}" ]; then
             local total shown i
@@ -148,7 +148,7 @@ function to {
     case "$1" in
 
     --help | -h)
-        ShowHelp
+        To_ShowHelp
         ;;
 
     --list | -l)
