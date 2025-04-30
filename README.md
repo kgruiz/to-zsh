@@ -1,8 +1,6 @@
 # to-zsh
 
-**`to-zsh` provides persistent, keyword-based directory shortcuts for Zsh, streamlining your command-line navigation.**
-
-Eliminate the need to repeatedly type lengthy directory paths. With `to-zsh`, assign memorable keywords to frequently accessed directories and jump to them instantly.
+`to-zsh` provides persistent, keyword-based directory shortcuts for Zsh, streamlining your command-line navigation. It eliminates the need to repeatedly type lengthy directory paths by allowing you to assign memorable keywords to frequently accessed directories and jump to them instantly.
 
 ## Table of Contents
 
