@@ -22,6 +22,7 @@ function To_ShowHelp {
     printf "  ${DIM_WHITE}to --add, -a <keyword> <path>${RESET}\n"
     printf "  ${DIM_WHITE}to --rm, -r <keyword>${RESET}\n"
     printf "  ${DIM_WHITE}to --list, -l${RESET}\n"
+    printf "  ${DIM_WHITE}to --print-path, -p <keyword>${RESET}\n"
     printf "  ${DIM_WHITE}to --help, -h${RESET}\n\n"
 
     printf "${MAGENTA}Commands:${RESET}\n"
@@ -29,6 +30,7 @@ function To_ShowHelp {
     printf "  ${BOLD_CYAN}--add, -a${RESET}  Save new shortcut\n"
     printf "  ${BOLD_CYAN}--rm, -r${RESET}   Remove shortcut\n"
     printf "  ${BOLD_CYAN}--list, -l${RESET} List shortcuts\n"
+    printf "  ${BOLD_CYAN}--print-path, -p${RESET} Print stored path (no cd)\n"
     printf "  ${BOLD_CYAN}--help, -h${RESET} Show this help\n"
 }
 
@@ -143,6 +145,29 @@ function JumpToShortcut {
 function to {
     if [ ! -f "${CONFIG_FILE}" ]; then
         touch "${CONFIG_FILE}"
+    fi
+
+    # --print-path: print the stored path for a keyword and exit
+    if [[ "$1" == "-p" || "$1" == "--print-path" ]]; then
+
+        local keyword="$2"
+
+        if [ -z "${keyword}" ]; then
+            printf "${BOLD_RED}Usage: to -p <keyword>${RESET}\n"
+            return 1
+        fi
+
+        # Extract path for keyword
+        local match
+        match=$(grep -m1 "^${keyword}=" "${CONFIG_FILE}" 2>/dev/null)
+
+        if [ -z "${match}" ]; then
+            printf "${BOLD_RED}Error: Shortcut '%s' not found.${RESET}\n" "${keyword}"
+            return 1
+        fi
+
+        printf "%s\n" "${match#*=}"
+        return
     fi
 
     case "$1" in
