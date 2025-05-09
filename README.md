@@ -114,18 +114,20 @@ View the command usage and options with `to --help` or `to -h`.
 to - Persistent Directory Shortcuts
 
 Usage:
-  to <keyword>
-  to --add, -a <keyword> <path>
-  to --rm, -r <keyword>
-  to --list, -l
-  to --help, -h
+  to <keyword>                       Navigate to saved shortcut
+  to --add, -a <keyword> <path>      Save new shortcut
+  to --rm,  -r <keyword>             Remove existing shortcut
+  to --list, -l                      List all shortcuts
+  to --print-path, -p <keyword>      Print stored path only
+  to --help, -h                      Show this help
 
-Commands:
-  keyword      Jump to saved directory
-  --add, -a    Save new shortcut
-  --rm, -r     Remove shortcut
-  --list, -l   List shortcuts
-  --help, -h   Show this help
+Options:
+  keyword                            Shortcut name
+  --add, -a                          Add new shortcut
+  --rm, -r                           Remove shortcut
+  --list, -l                         List shortcuts
+  --print-path, -p                   Print path only
+  --help, -h                         Show help
 ```
 
 ## Options
@@ -135,6 +137,7 @@ Commands:
 | `--add <k> <path>`  | `-a`  | Add a new shortcut `k` → `path`.    |
 | `--rm <k>`          | `-r`  | Remove shortcut associated with `k`.|
 | `--list`            | `-l`  | List all saved shortcuts.           |
+| `--print-path <k>`  | `-p`  | Print stored path for `k` only.     |
 | `--help`            | `-h`  | Show help message and usage.        |
 
 ## Configuration Details

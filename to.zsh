@@ -18,20 +18,20 @@ function To_ShowHelp {
     printf "${YELLOW}to - Persistent Directory Shortcuts${RESET}\n\n"
 
     printf "${MAGENTA}Usage:${RESET}\n"
-    printf "  ${DIM_WHITE}to <keyword>${RESET}\n"
-    printf "  ${DIM_WHITE}to --add, -a <keyword> <path>${RESET}\n"
-    printf "  ${DIM_WHITE}to --rm, -r <keyword>${RESET}\n"
-    printf "  ${DIM_WHITE}to --list, -l${RESET}\n"
-    printf "  ${DIM_WHITE}to --print-path, -p <keyword>${RESET}\n"
-    printf "  ${DIM_WHITE}to --help, -h${RESET}\n\n"
+    printf "  ${DIM_WHITE}to <keyword>                       ${RESET}Navigate to saved shortcut\n"
+    printf "  ${DIM_WHITE}to --add, -a <keyword> <path>     ${RESET} Save new shortcut\n"
+    printf "  ${DIM_WHITE}to --rm,  -r <keyword>            ${RESET} Remove existing shortcut\n"
+    printf "  ${DIM_WHITE}to --list, -l                     ${RESET} List all shortcuts\n"
+    printf "  ${DIM_WHITE}to --print-path, -p <keyword>     ${RESET} Print stored path only\n"
+    printf "  ${DIM_WHITE}to --help, -h                     ${RESET} Show this help\n\n"
 
-    printf "${MAGENTA}Commands:${RESET}\n"
-    printf "  ${BOLD_CYAN}keyword${RESET}    Jump to saved directory\n"
-    printf "  ${BOLD_CYAN}--add, -a${RESET}  Save new shortcut\n"
-    printf "  ${BOLD_CYAN}--rm, -r${RESET}   Remove shortcut\n"
-    printf "  ${BOLD_CYAN}--list, -l${RESET} List shortcuts\n"
-    printf "  ${BOLD_CYAN}--print-path, -p${RESET} Print stored path (no cd)\n"
-    printf "  ${BOLD_CYAN}--help, -h${RESET} Show this help\n"
+    printf "${MAGENTA}Options:${RESET}\n"
+    printf "  ${BOLD_CYAN}keyword                        ${RESET}    Shortcut name\n"
+    printf "  ${BOLD_CYAN}--add, -a                      ${RESET}    Add new shortcut\n"
+    printf "  ${BOLD_CYAN}--rm, -r                       ${RESET}    Remove shortcut\n"
+    printf "  ${BOLD_CYAN}--list, -l                     ${RESET}    List shortcuts\n"
+    printf "  ${BOLD_CYAN}--print-path, -p               ${RESET}    Print path only\n"
+    printf "  ${BOLD_CYAN}--help, -h                     ${RESET}    Show help\n"
 }
 
 # List all saved shortcuts
