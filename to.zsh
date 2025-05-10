@@ -56,7 +56,11 @@ function AddShortcut {
         return
     fi
 
-    if [ ! -d "${targetPath}" ]; then
+    if [ ! -e "${targetPath}" ]; then
+        printf "${BOLD_RED}Error: Path '%s' does not exist.${RESET}\n" "${targetPath}"
+        return
+    elif [ ! -d "${targetPath}" ]; then
+        printf "${BOLD_RED}Error: Path '%s' exists but is not a directory.${RESET}\n" "${targetPath}"
         return
     fi
 
