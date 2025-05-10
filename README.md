@@ -1,6 +1,6 @@
 # to-zsh
 
-`to-zsh` provides persistent, keyword-based directory shortcuts for Zsh, streamlining your command-line navigation. It eliminates the need to repeatedly type lengthy directory paths by allowing you to assign memorable keywords to frequently accessed directories and jump to them instantly.
+`to-zsh` provides persistent, keyword-based directory shortcuts with iterative prefix matching for Zsh, enabling instant navigation to saved or nested subdirectories without typing full paths. Assign memorable keywords to frequently accessed directories and traverse deeper paths seamlessly.
 
 ## Table of Contents
 
@@ -16,6 +16,7 @@
 
 - **Keyword-Based Navigation:** Assign concise keywords to directory paths.
 - **Instant Directory Switching:** Navigate quickly using the `to <keyword>` command.
+- **Iterative Prefix Matching:** Supports nested subdirectory navigation by matching the longest saved keyword prefix and appending the remainder.
 - **Shell Autocomplete:** Tab-completion for commands and saved keywords.
 - **Simple Shortcut Management:** Easily add (`--add`/`-a`), remove (`--rm`/`-r`), and list (`--list`/`-l`) your shortcuts.
 - **Relative Path Support:** Accepts relative or absolute directory paths, resolving relative paths to their absolute form automatically.
@@ -28,7 +29,7 @@
 1. **Clone the Repository (or Download `to.zsh`)**
     Choose a location for the script (e.g., `~/.config/zsh/plugins/to-zsh`).
 
-    ```bash
+    ```zsh
     # Option 1: Clone the repository
     git clone https://github.com/kgruiz/to-zsh.git ~/.config/zsh/plugins/to-zsh
 
@@ -40,7 +41,7 @@
 2. **Source the Script in `.zshrc`**
     Add the following snippet to your `~/.zshrc` configuration file. Adjust `TO_FUNC_PATH` to the actual location where you placed `to.zsh`.
 
-    ```bash
+    ```zsh
     # init zsh completion
     autoload -Uz compinit
     compinit
@@ -60,7 +61,7 @@
 
 3. **Apply Changes**
 
-    ```bash
+    ```zsh
     source ~/.zshrc
     ```
 
@@ -71,26 +72,37 @@ The `to` command facilitates shortcut management and execution.
 **1. Adding a Shortcut**
 Register a new shortcut using `to --add <keyword> <path>` or the shorthand `to -a <keyword> <path>`. The specified path can be relative or absolute; relative paths will be resolved to their absolute form automatically.
 
-```bash
+```zsh
 ❯ to --add proj ../my-project
 Added proj → ../my-project
 ```
 
 **2. Jumping to a Saved Directory**
-Navigate to a directory associated with a keyword using `to <keyword>`.
+Navigate to a directory or nested subdirectory using `to <keyword>` or `to <keyword>/subdir`. The script selects the longest matching keyword prefix and appends any remaining path segments.
 
-```bash
-❯ to proj
-Changed directory to ~/Development/my-project
+Examples:
 
-❯ pwd
-/Users/youruser/Development/my-project
+```zsh
+# Simple match using base keyword
+❯ to proj/docs
+Changed directory to ~/Development/my-project/docs
+
+# Deeper nested path; longest prefix matching
+❯ to proj/src/components/button
+Changed directory to ~/Development/my-project/src/components/button
+
+# When both proj and proj/src exist as shortcuts, prefix matching chooses proj/src
+proj=/Development/my-project
+proj/src=/Development/my-project/src
+
+❯ to proj/src/utils
+Changed directory to /Development/my-project/src/utils
 ```
 
 **3. Listing Saved Shortcuts**
 Display all currently registered shortcuts with `to --list` or `to -l`.
 
-```bash
+```zsh
 ❯ to --list
 proj → ~/Development/my-project
 docs → /usr/share/doc
@@ -98,18 +110,29 @@ conf → ~/.config
 dotfiles → ~/Repositories/dotfiles
 ```
 
-**4. Removing a Shortcut**
+**4. Printing a Stored or Nested Path**
+Print the stored base path or nested path using prefix matching: `to -p <keyword>` or `to -p <keyword>/subdir`.
+
+```zsh
+❯ to -p proj/src/utils
+~/Development/my-project/src/utils
+
+❯ to -p docs/api/v1
+/usr/share/doc/api/v1
+```
+
+**5. Removing a Shortcut**
 Delete an existing shortcut using `to --rm <keyword>` or `to -r <keyword>`.
 
-```bash
+```zsh
 ❯ to --rm docs
 Removed docs.
 ```
 
-**5. Displaying Help Information**
+**6. Displaying Help Information**
 View the command usage and options with `to --help` or `to -h`.
 
-```bash
+```zsh
 ❯ to --help
 to - Persistent Directory Shortcuts
 
@@ -137,7 +160,7 @@ Options:
 | `--add <k> <path>`  | `-a`  | Add a new shortcut `k` → `path`.    |
 | `--rm <k>`          | `-r`  | Remove shortcut associated with `k`.|
 | `--list`            | `-l`  | List all saved shortcuts.           |
-| `--print-path <k>`  | `-p`  | Print stored path for `k` only.     |
+| `--print-path <k>`  | `-p`  | Print stored or nested path using prefix matching.              |
 | `--help`            | `-h`  | Show help message and usage.        |
 
 ## Configuration Details

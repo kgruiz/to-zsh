@@ -96,53 +96,53 @@ function RemoveShortcut {
 
 # Jump to a saved directory
 function JumpToShortcut {
-    local keyword="$1"
-
-    if [ -z "${keyword}" ]; then
+    local input="$1"
+    if [ -z "${input}" ]; then
         To_ShowHelp
-        # show up to 10 saved keywords
-        if [ -r "${CONFIG_FILE}" ]; then
-            local total shown i
-            total=$(grep -c '^' "${CONFIG_FILE}")
-            if [ "${total}" -le 10 ]; then
-                printf "\n${MAGENTA}Saved shortcuts:${RESET}\n"
-                i=1
-                while IFS='=' read -r key _ || [ -n "$key" ]; do
-                    printf "  ${YELLOW}%2d${RESET}. ${BOLD_CYAN}%s${RESET}\n" \
-                        "${i}" "${key}"
-                    ((i++))
-                done <"${CONFIG_FILE}"
-            else
-                shown=10
-                printf "\n${MAGENTA}Saved shortcuts (showing %d of %d):${RESET}\n" \
-                    "${shown}" "${total}"
-                i=1
-                while IFS='=' read -r key _ && [ "${i}" -le "${shown}" ]; do
-                    printf "  ${YELLOW}%2d${RESET}. ${BOLD_CYAN}%s${RESET}\n" \
-                        "${i}" "${key}"
-                    ((i++))
-                done <"${CONFIG_FILE}"
-                printf "  … and %d more\n" "$((total - shown))"
+        return
+    fi
+
+    # exact match
+    if grep -q "^${input}=" "${CONFIG_FILE}" 2>/dev/null; then
+        local basePath
+        basePath=$(grep "^${input}=" "${CONFIG_FILE}" | cut -d'=' -f2-)
+        cd "${basePath}" && printf "${GREEN}Changed directory to ${DIM_WHITE}%s${RESET}\n" "${basePath}"
+        return
+    fi
+
+    # split input into parts by '/'
+    local -a parts
+    parts=("${(@s:/:)input}")
+    # build prefix candidates in descending length (Zsh arrays start at 1)
+    local -a prefixes
+    local len=${#parts[@]}
+    for ((i=len; i>=1; i--)); do
+        local prefix="${parts[1]}"
+        for ((j=2; j<=i; j++)); do
+            prefix+="/${parts[j]}"
+        done
+        prefixes+=("${prefix}")
+    done
+
+    # try each prefix as a keyword
+    for prefix in "${prefixes[@]}"; do
+        if grep -q "^${prefix}=" "${CONFIG_FILE}" 2>/dev/null; then
+            local basePath remainder targetPath
+            basePath=$(grep "^${prefix}=" "${CONFIG_FILE}" | cut -d'=' -f2-)
+            remainder="${input#${prefix}}"
+            remainder="${remainder#/}"
+            targetPath="${basePath}"
+            if [ -n "${remainder}" ]; then
+                targetPath+="/${remainder}"
+            fi
+            if [ -d "${targetPath}" ]; then
+                cd "${targetPath}" && printf "${GREEN}Changed directory to ${DIM_WHITE}%s${RESET}\n" "${targetPath}"
+                return
             fi
         fi
+    done
 
-        return
-    fi
-
-    local targetPath
-    targetPath=$(grep "^${keyword}=" "${CONFIG_FILE}" | cut -d'=' -f2-)
-
-    if [ -z "${targetPath}" ]; then
-        printf "${BOLD_RED}Error: '%s' not found.${RESET}\n" "${keyword}"
-        return
-    fi
-
-    cd "${targetPath}" || {
-        printf "${BOLD_RED}Error: Failed to cd to '%s'.${RESET}\n" "${targetPath}"
-        return
-    }
-
-    printf "${GREEN}Changed directory to ${DIM_WHITE}%s${RESET}\n" "${targetPath}"
+    printf "${BOLD_RED}Error: Shortcut or path '%s' not found.${RESET}\n" "${input}" >&2
 }
 
 # Main entrypoint
@@ -153,25 +153,50 @@ function to {
 
     # --print-path: print the stored path for a keyword and exit
     if [[ "$1" == "-p" || "$1" == "--print-path" ]]; then
-
-        local keyword="$2"
-
-        if [ -z "${keyword}" ]; then
-            printf "${BOLD_RED}Usage: to -p <keyword>${RESET}\n"
+        local input="$2"
+        if [ -z "${input}" ]; then
+            printf "${BOLD_RED}Usage: to -p <keyword>[/subdir]${RESET}\n" >&2
             return 1
         fi
 
-        # Extract path for keyword
-        local match
-        match=$(grep -m1 "^${keyword}=" "${CONFIG_FILE}" 2>/dev/null)
-
-        if [ -z "${match}" ]; then
-            printf "${BOLD_RED}Error: Shortcut '%s' not found.${RESET}\n" "${keyword}"
-            return 1
+        # exact match
+        local pathLine
+        if pathLine=$(grep -m1 "^${input}=" "${CONFIG_FILE}" 2>/dev/null); then
+            printf "%s\n" "${pathLine#*=}"
+            return
         fi
 
-        printf "%s\n" "${match#*=}"
-        return
+        # split input into parts
+        local -a parts
+        parts=("${(@s:/:)input}")
+        local -a prefixes
+        local len=${#parts[@]}
+        for ((i=len; i>=1; i--)); do
+            local prefix="${parts[1]}"
+            for ((j=2; j<=i; j++)); do
+                prefix+="/${parts[j]}"
+            done
+            prefixes+=("${prefix}")
+        done
+
+        # try prefix matches
+        for prefix in "${prefixes[@]}"; do
+            if pathLine=$(grep -m1 "^${prefix}=" "${CONFIG_FILE}" 2>/dev/null); then
+                local basePath remainder targetPath
+                basePath="${pathLine#*=}"
+                remainder="${input#${prefix}}"
+                remainder="${remainder#/}"
+                targetPath="${basePath}"
+                if [ -n "${remainder}" ]; then
+                    targetPath+="/${remainder}"
+                fi
+                printf "%s\n" "${targetPath}"
+                return
+            fi
+        done
+
+        printf "${BOLD_RED}Error: Shortcut or path '%s' not found.${RESET}\n" "${input}" >&2
+        return 1
     fi
 
     case "$1" in
