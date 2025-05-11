@@ -152,6 +152,7 @@ Usage:
   to --rm,  -r <keyword>             Remove existing shortcut
   to --list, -l                      List all shortcuts
   to --print-path, -p <keyword>      Print stored path only
+  to --code, -c <keyword>            Open in VSCode after navigation
   to --help, -h                      Show this help
 
 Options:
@@ -160,6 +161,7 @@ Options:
   --rm, -r                           Remove shortcut
   --list, -l                         List shortcuts
   --print-path, -p                   Print path only
+  --code, -c                         Open in VSCode
   --help, -h                         Show help
 ```
 

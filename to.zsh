@@ -23,6 +23,7 @@ function To_ShowHelp {
     printf "  ${DIM_WHITE}to --rm,  -r <keyword>            ${RESET} Remove existing shortcut\n"
     printf "  ${DIM_WHITE}to --list, -l                     ${RESET} List all shortcuts\n"
     printf "  ${DIM_WHITE}to --print-path, -p <keyword>     ${RESET} Print stored path only\n"
+    printf "  ${DIM_WHITE}to --code, -c <keyword>           ${RESET} Open in VSCode after navigation\n"
     printf "  ${DIM_WHITE}to --help, -h                     ${RESET} Show this help\n\n"
 
     printf "${MAGENTA}Options:${RESET}\n"
@@ -31,6 +32,7 @@ function To_ShowHelp {
     printf "  ${BOLD_CYAN}--rm, -r                       ${RESET}    Remove shortcut\n"
     printf "  ${BOLD_CYAN}--list, -l                     ${RESET}    List shortcuts\n"
     printf "  ${BOLD_CYAN}--print-path, -p               ${RESET}    Print path only\n"
+    printf "  ${BOLD_CYAN}--code, -c                     ${RESET}    Open in VSCode\n"
     printf "  ${BOLD_CYAN}--help, -h                     ${RESET}    Show help\n"
 }
 
@@ -185,82 +187,112 @@ function to {
     fi
 
     local runCode=0
+    local printPath=0
+    local action=""
+    local addKeyword=""
+    local targetPath=""
+    local removeKeyword=""
+    local positional=()
 
-    if [[ "$1" == "-c" || "$1" == "--code" ]]; then
-        runCode=1
-        shift
-    fi
+    # parse flags in any position
+    while [[ $# -gt 0 ]]; do
+        case $1 in
+            -c|--code)
+                runCode=1
+                shift
+                ;;
+            -p|--print-path)
+                printPath=1
+                shift
+                ;;
+            --help|-h)
+                action="help"
+                shift
+                ;;
+            --list|-l)
+                action="list"
+                shift
+                ;;
+            --add|-a)
+                action="add"
+                shift
+                addKeyword="$1"
+                targetPath="$2"
+                shift 2
+                ;;
+            --rm|-r)
+                action="remove"
+                shift
+                removeKeyword="$1"
+                shift
+                ;;
+            *)
+                positional+=("$1")
+                shift
+                ;;
+        esac
+    done
 
-    # --print-path: print the stored path for a keyword and exit
-    if [[ "$1" == "-p" || "$1" == "--print-path" ]]; then
-        local input="$2"
-        if [ -z "${input}" ]; then
+    if [[ $printPath -eq 1 ]]; then
+        # handle print-path action
+        if [ -z "${positional[0]}" ]; then
             printf "${BOLD_RED}Usage: to -p <keyword>[/subdir]${RESET}\n" >&2
             return 1
         fi
-
+        # reuse existing logic from --print-path section
+        local input="${positional[0]}"
         # exact match
         local pathLine
         if pathLine=$(grep -m1 "^${input}=" "${CONFIG_FILE}" 2>/dev/null); then
             printf "%s\n" "${pathLine#*=}"
             return
         fi
-
-        # split input into parts
-        local -a parts
+        # prefix-match logic
+        # (copy the prefix-match block from original --print-path code)
         parts=("${(@s:/:)input}")
-        local -a prefixes
-        local len=${#parts[@]}
+        prefixes=()
+        len=${#parts[@]}
         for ((i=len; i>=1; i--)); do
-            local prefix="${parts[1]}"
+            prefix="${parts[1]}"
             for ((j=2; j<=i; j++)); do
                 prefix+="/${parts[j]}"
             done
             prefixes+=("${prefix}")
         done
-
-        # try prefix matches
         for prefix in "${prefixes[@]}"; do
             if pathLine=$(grep -m1 "^${prefix}=" "${CONFIG_FILE}" 2>/dev/null); then
-                local basePath remainder targetPath
                 basePath="${pathLine#*=}"
                 remainder="${input#${prefix}}"
                 remainder="${remainder#/}"
-                targetPath="${basePath}"
+                target="${basePath}"
                 if [ -n "${remainder}" ]; then
-                    targetPath+="/${remainder}"
+                    target+="/${remainder}"
                 fi
-                printf "%s\n" "${targetPath}"
+                printf "%s\n" "${target}"
                 return
             fi
         done
-
         printf "${BOLD_RED}Error: Shortcut or path '%s' not found.${RESET}\n" "${input}" >&2
         return 1
     fi
 
-    case "$1" in
-
-    --help | -h)
-        To_ShowHelp
-        ;;
-
-    --list | -l)
-        ListShortcuts
-        ;;
-
-    --add | -a)
-        AddShortcut "$2" "$3"
-        ;;
-
-    --rm | -r)
-        RemoveShortcut "$2"
-        ;;
-
-    *)
-        JumpToShortcut "$1"
-        ;;
-
+    case "$action" in
+        help)
+            To_ShowHelp
+            ;;
+        list)
+            ListShortcuts
+            ;;
+        add)
+            AddShortcut "$addKeyword" "$targetPath"
+            ;;
+        remove)
+            RemoveShortcut "$removeKeyword"
+            ;;
+        *)
+            # default to jump, passing first positional as input
+            JumpToShortcut "${positional[0]}"
+            ;;
     esac
 }
 
