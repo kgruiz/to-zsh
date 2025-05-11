@@ -97,8 +97,35 @@ function RemoveShortcut {
 # Jump to a saved directory
 function JumpToShortcut {
     local input="$1"
+
     if [ -z "${input}" ]; then
         To_ShowHelp
+        # show up to 10 saved keywords
+        if [ -r "${CONFIG_FILE}" ]; then
+            local total shown i
+            total=$(grep -c '^' "${CONFIG_FILE}")
+            if [ "${total}" -le 10 ]; then
+                printf "\n${MAGENTA}Saved shortcuts:${RESET}\n"
+                i=1
+                while IFS='=' read -r key _ || [ -n "$key" ]; do
+                    printf "  ${YELLOW}%2d${RESET}. ${BOLD_CYAN}%s${RESET}\n" \
+                        "${i}" "${key}"
+                    ((i++))
+                done <"${CONFIG_FILE}"
+            else
+                shown=10
+                printf "\n${MAGENTA}Saved shortcuts (showing %d of %d):${RESET}\n" \
+                    "${shown}" "${total}"
+                i=1
+                while IFS='=' read -r key _ && [ "${i}" -le "${shown}" ]; do
+                    printf "  ${YELLOW}%2d${RESET}. ${BOLD_CYAN}%s${RESET}\n" \
+                        "${i}" "${key}"
+                    ((i++))
+                done <"${CONFIG_FILE}"
+                printf "  … and %d more\n" "$((total - shown))"
+            fi
+        fi
+
         return
     fi
 
