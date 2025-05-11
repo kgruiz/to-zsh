@@ -235,12 +235,12 @@ function to {
 
     if [[ $printPath -eq 1 ]]; then
         # handle print-path action
-        if [ -z "${positional[0]}" ]; then
+        if [ -z "${positional[1]}" ]; then
             printf "${BOLD_RED}Usage: to -p <keyword>[/subdir]${RESET}\n" >&2
             return 1
         fi
         # reuse existing logic from --print-path section
-        local input="${positional[0]}"
+        local input="${positional[1]}"
         # exact match
         local pathLine
         if pathLine=$(grep -m1 "^${input}=" "${CONFIG_FILE}" 2>/dev/null); then
@@ -291,7 +291,7 @@ function to {
             ;;
         *)
             # default to jump, passing first positional as input
-            JumpToShortcut "${positional[0]}"
+            JumpToShortcut "${positional[1]}"
             ;;
     esac
 }
