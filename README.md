@@ -17,6 +17,7 @@
 - **Keyword-Based Navigation:** Assign concise keywords to directory paths.
 - **Instant Directory Switching:** Navigate quickly using the `to <keyword>` command.
 - **Iterative Prefix Matching:** Supports nested subdirectory navigation by matching the longest saved keyword prefix and appending the remainder.
+- **Automatic Editor Launch:** Use `-c`/`--code` to automatically run `code .` after changing directories.
 - **Shell Autocomplete:** Tab-completion for commands and saved keywords.
 - **Simple Shortcut Management:** Easily add (`--add`/`-a`), remove (`--rm`/`-r`), and list (`--list`/`-l`) your shortcuts.
 - **Relative Path Support:** Accepts relative or absolute directory paths, resolving relative paths to their absolute form automatically.
@@ -99,6 +100,15 @@ proj/src=/Development/my-project/src
 Changed directory to /Development/my-project/src/utils
 ```
 
+**Running Code Editor**
+Append `-c` or `--code` to open VSCode in the target directory:
+
+```zsh
+❯ to -c proj/docs
+Changed directory to ~/Development/my-project/docs
+# VSCode opens in that directory
+```
+
 **3. Listing Saved Shortcuts**
 Display all currently registered shortcuts with `to --list` or `to -l`.
 
@@ -161,6 +171,7 @@ Options:
 | `--rm <k>`          | `-r`  | Remove shortcut associated with `k`.|
 | `--list`            | `-l`  | List all saved shortcuts.           |
 | `--print-path <k>`  | `-p`  | Print stored or nested path using prefix matching.              |
+| `--code`            | `-c`  | Run `code .` in target directory after navigation. |
 | `--help`            | `-h`  | Show help message and usage.        |
 
 ## Configuration Details

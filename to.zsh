@@ -133,7 +133,10 @@ function JumpToShortcut {
     if grep -q "^${input}=" "${CONFIG_FILE}" 2>/dev/null; then
         local basePath
         basePath=$(grep "^${input}=" "${CONFIG_FILE}" | cut -d'=' -f2-)
-        cd "${basePath}" && printf "${GREEN}Changed directory to ${DIM_WHITE}%s${RESET}\n" "${basePath}"
+        cd "${basePath}" && {
+            printf "${GREEN}Changed directory to ${DIM_WHITE}%s${RESET}\n" "${basePath}"
+            if [ "$runCode" -eq 1 ]; then code .; fi
+        }
         return
     fi
 
@@ -163,7 +166,10 @@ function JumpToShortcut {
                 targetPath+="/${remainder}"
             fi
             if [ -d "${targetPath}" ]; then
-                cd "${targetPath}" && printf "${GREEN}Changed directory to ${DIM_WHITE}%s${RESET}\n" "${targetPath}"
+                cd "${targetPath}" && {
+                    printf "${GREEN}Changed directory to ${DIM_WHITE}%s${RESET}\n" "${targetPath}"
+                    if [ "$runCode" -eq 1 ]; then code .; fi
+                }
                 return
             fi
         fi
@@ -176,6 +182,13 @@ function JumpToShortcut {
 function to {
     if [ ! -f "${CONFIG_FILE}" ]; then
         touch "${CONFIG_FILE}"
+    fi
+
+    local runCode=0
+
+    if [[ "$1" == "-c" || "$1" == "--code" ]]; then
+        runCode=1
+        shift
     fi
 
     # --print-path: print the stored path for a keyword and exit
