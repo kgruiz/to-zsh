@@ -13,6 +13,37 @@ if [[ -z $MAGENTA ]]; then readonly MAGENTA="${ESC}[0;35m"; fi
 
 CONFIG_FILE="${HOME}/.to_dirs"
 
+# Remove expired entries from CONFIG_FILE
+function CleanExpiredShortcuts {
+    [ ! -f "${CONFIG_FILE}" ] && return
+    local now tmp changed=0
+    now=$(date +%s)
+    tmp="${CONFIG_FILE}.tmp"
+    >"${tmp}"
+    while IFS='=' read -r key value || [ -n "$key" ]; do
+        [ -z "$key" ] && continue
+        local path expire
+        path="${value%%|*}"
+        if [[ "$value" == *"|"* ]]; then
+            expire="${value#*|}"
+            if [[ -n "$expire" && "$expire" -le "$now" ]]; then
+                changed=1
+                continue
+            fi
+        fi
+        if [ -n "$expire" ]; then
+            printf '%s=%s|%s\n' "$key" "$path" "$expire" >>"${tmp}"
+        else
+            printf '%s=%s\n' "$key" "$path" >>"${tmp}"
+        fi
+    done <"${CONFIG_FILE}"
+    if [ "$changed" -eq 1 ]; then
+        mv "${tmp}" "${CONFIG_FILE}"
+    else
+        rm -f "${tmp}"
+    fi
+}
+
 # Show usage/help
 function To_ShowHelp {
     printf "${YELLOW}to - Persistent Directory Shortcuts${RESET}\n\n"
@@ -20,6 +51,7 @@ function To_ShowHelp {
     printf "${MAGENTA}Usage:${RESET}\n"
     printf "  ${DIM_WHITE}to <keyword>                       ${RESET}Navigate to saved shortcut\n"
     printf "  ${DIM_WHITE}to --add, -a <keyword> <path>     ${RESET} Save new shortcut\n"
+    printf "  ${DIM_WHITE}   [--expires <epoch>]            ${RESET} Optional expiration\n"
     printf "  ${DIM_WHITE}to --rm,  -r <keyword>            ${RESET} Remove existing shortcut\n"
     printf "  ${DIM_WHITE}to --list, -l                     ${RESET} List all shortcuts\n"
     printf "  ${DIM_WHITE}to --print-path, -p <keyword>     ${RESET} Print stored path only\n"
@@ -33,18 +65,21 @@ function To_ShowHelp {
     printf "  ${BOLD_CYAN}--list, -l                     ${RESET}    List shortcuts\n"
     printf "  ${BOLD_CYAN}--print-path, -p               ${RESET}    Print path only\n"
     printf "  ${BOLD_CYAN}--code, -c                     ${RESET}    Open in VSCode\n"
+    printf "  ${BOLD_CYAN}--expires <epoch>              ${RESET}    Expiration timestamp\n"
     printf "  ${BOLD_CYAN}--help, -h                     ${RESET}    Show help\n"
 }
 
 # List all saved shortcuts
 function ListShortcuts {
+    CleanExpiredShortcuts
     if [ ! -s "${CONFIG_FILE}" ]; then
         printf "${BOLD_RED}No shortcuts saved.${RESET}\n"
         return
     fi
 
-    while IFS='=' read -r keyword targetPath || [ -n "$keyword" ]; do
-        printf "${BOLD_CYAN}%s${RESET} → ${DIM_WHITE}%s${RESET}\n" "$keyword" "$targetPath"
+    while IFS='=' read -r keyword value || [ -n "$keyword" ]; do
+        local path="${value%%|*}"
+        printf "${BOLD_CYAN}%s${RESET} → ${DIM_WHITE}%s${RESET}\n" "$keyword" "$path"
     done <"${CONFIG_FILE}"
 }
 
@@ -52,9 +87,10 @@ function ListShortcuts {
 function AddShortcut {
     local keyword="$1"
     local targetPath="$2"
+    local expires="$3"
 
     if [ -z "${keyword}" ] || [ -z "${targetPath}" ]; then
-        printf "${BOLD_RED}Usage: to --add <keyword> <path>${RESET}\n"
+        printf "${BOLD_RED}Usage: to --add <keyword> <path> [--expires <epoch>]${RESET}\n"
         return
     fi
 
@@ -74,7 +110,15 @@ function AddShortcut {
         return
     fi
 
-    printf '%s\n' "${keyword}=${absPath}" >>"${CONFIG_FILE}"
+    local record="${keyword}=${absPath}"
+    if [ -n "${expires}" ]; then
+        if [[ ! "${expires}" =~ ^[0-9]+$ ]]; then
+            printf "${BOLD_RED}Error: expires must be epoch seconds.${RESET}\n"
+            return
+        fi
+        record+="|${expires}"
+    fi
+    printf '%s\n' "${record}" >>"${CONFIG_FILE}"
     printf "${GREEN}Added ${BOLD_CYAN}%s${RESET}${GREEN} → ${DIM_WHITE}%s${RESET}\n" "${keyword}" "${absPath}"
 }
 
@@ -98,6 +142,7 @@ function RemoveShortcut {
 
 # Jump to a saved directory
 function JumpToShortcut {
+    CleanExpiredShortcuts
     local input="$1"
 
     if [ -z "${input}" ]; then
@@ -135,6 +180,7 @@ function JumpToShortcut {
     if grep -q "^${input}=" "${CONFIG_FILE}" 2>/dev/null; then
         local basePath
         basePath=$(grep "^${input}=" "${CONFIG_FILE}" | cut -d'=' -f2-)
+        basePath="${basePath%%|*}"
         cd "${basePath}" && {
             printf "${GREEN}Changed directory to ${DIM_WHITE}%s${RESET}\n" "${basePath}"
             if [ "$runCode" -eq 1 ]; then code .; fi
@@ -161,6 +207,7 @@ function JumpToShortcut {
         if grep -q "^${prefix}=" "${CONFIG_FILE}" 2>/dev/null; then
             local basePath remainder targetPath
             basePath=$(grep "^${prefix}=" "${CONFIG_FILE}" | cut -d'=' -f2-)
+            basePath="${basePath%%|*}"
             remainder="${input#${prefix}}"
             remainder="${remainder#/}"
             targetPath="${basePath}"
@@ -191,6 +238,7 @@ function to {
     local action=""
     local addKeyword=""
     local targetPath=""
+    local expiresArg=""
     local removeKeyword=""
     local positional=()
 
@@ -220,6 +268,10 @@ function to {
                 targetPath="$2"
                 shift 2
                 ;;
+            --expires)
+                expiresArg="$2"
+                shift 2
+                ;;
             --rm|-r)
                 action="remove"
                 shift
@@ -234,6 +286,7 @@ function to {
     done
 
     if [[ $printPath -eq 1 ]]; then
+        CleanExpiredShortcuts
         # handle print-path action
         if [ -z "${positional[1]}" ]; then
             printf "${BOLD_RED}Usage: to -p <keyword>[/subdir]${RESET}\n" >&2
@@ -244,7 +297,7 @@ function to {
         # exact match
         local pathLine
         if pathLine=$(grep -m1 "^${input}=" "${CONFIG_FILE}" 2>/dev/null); then
-            printf "%s\n" "${pathLine#*=}"
+            printf "%s\n" "${pathLine#*=}" | cut -d'|' -f1
             return
         fi
         # prefix-match logic
@@ -262,6 +315,7 @@ function to {
         for prefix in "${prefixes[@]}"; do
             if pathLine=$(grep -m1 "^${prefix}=" "${CONFIG_FILE}" 2>/dev/null); then
                 basePath="${pathLine#*=}"
+                basePath="${basePath%%|*}"
                 remainder="${input#${prefix}}"
                 remainder="${remainder#/}"
                 target="${basePath}"
@@ -284,7 +338,7 @@ function to {
             ListShortcuts
             ;;
         add)
-            AddShortcut "$addKeyword" "$targetPath"
+            AddShortcut "$addKeyword" "$targetPath" "$expiresArg"
             ;;
         remove)
             RemoveShortcut "$removeKeyword"
@@ -309,7 +363,7 @@ if [[ -n $ZSH_VERSION ]]; then
 
         case $state in
         cmds)
-            compadd -- --help -h --list -l --add -a --rm -r
+            compadd -- --help -h --list -l --add -a --rm -r --expires
             ;;
         keywords)
             local -a keywords
