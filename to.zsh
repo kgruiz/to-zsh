@@ -13,6 +13,9 @@ if [[ -z $MAGENTA ]]; then readonly MAGENTA="${ESC}[0;35m"; fi
 
 CONFIG_FILE="${HOME}/.to_dirs"
 CONFIG_META_FILE="${HOME}/.to_dirs_meta"
+USER_CONFIG_FILE="${HOME}/.to_zsh_config"
+RECENT_FILE="${HOME}/.to_dirs_recent"
+USER_SORT_ORDER="added"
 
 # Remove expired shortcuts from storage
 function CleanupExpiredShortcuts {
@@ -42,6 +45,57 @@ function CleanupExpiredShortcuts {
     fi
 }
 
+# Load user preferences
+function LoadUserConfig {
+    USER_SORT_ORDER="added"
+    if [ -f "${USER_CONFIG_FILE}" ]; then
+        while IFS='=' read -r key val || [ -n "$key" ]; do
+            case "$key" in
+                sort_order)
+                    USER_SORT_ORDER="$val"
+                    ;;
+            esac
+        done <"${USER_CONFIG_FILE}"
+    fi
+}
+
+# Return saved keywords sorted per user preference
+function GetSortedKeywords {
+    LoadUserConfig
+    CleanupExpiredShortcuts
+    local key path
+    local -a keys
+    while IFS='=' read -r key path || [ -n "$key" ]; do
+        keys+=("$key")
+    done <"${CONFIG_FILE}"
+    case "$USER_SORT_ORDER" in
+        alpha)
+            keys=($(printf '%s\n' "${keys[@]}" | sort))
+            ;;
+        recent)
+            if [ -f "${RECENT_FILE}" ]; then
+                keys=($(for k in "${keys[@]}"; do
+                            ts=$(grep -m1 "^${k}=" "${RECENT_FILE}" | cut -d'=' -f2)
+                            echo "${ts:-0} ${k}"
+                        done | sort -k1,1nr | awk '{print $2}'))
+            fi
+            ;;
+    esac
+    printf '%s\n' "${keys[@]}"
+}
+
+# Update timestamp for most recently used keywords
+function UpdateRecentUsage {
+    local keyword="$1"
+    local now
+    now=$(date +%s)
+    [ -f "${RECENT_FILE}" ] || : >"${RECENT_FILE}"
+    if grep -q "^${keyword}=" "${RECENT_FILE}" 2>/dev/null; then
+        grep -v "^${keyword}=" "${RECENT_FILE}" >"${RECENT_FILE}.tmp" && mv "${RECENT_FILE}.tmp" "${RECENT_FILE}"
+    fi
+    printf '%s=%s\n' "$keyword" "$now" >>"${RECENT_FILE}"
+}
+
 # Show usage/help
 function To_ShowHelp {
     printf "${YELLOW}to - Persistent Directory Shortcuts${RESET}\n\n"
@@ -68,15 +122,16 @@ function To_ShowHelp {
 
 # List all saved shortcuts
 function ListShortcuts {
-    CleanupExpiredShortcuts
     if [ ! -s "${CONFIG_FILE}" ]; then
         printf "${BOLD_RED}No shortcuts saved.${RESET}\n"
         return
     fi
 
-    while IFS='=' read -r keyword targetPath || [ -n "$keyword" ]; do
+    local keyword targetPath
+    while IFS= read -r keyword; do
+        targetPath=$(grep -m1 "^${keyword}=" "${CONFIG_FILE}" | cut -d'=' -f2-)
         printf "${BOLD_CYAN}%s${RESET} → ${DIM_WHITE}%s${RESET}\n" "$keyword" "$targetPath"
-    done <"${CONFIG_FILE}"
+    done < <(GetSortedKeywords)
 }
 
 # Add a new shortcut
@@ -141,7 +196,6 @@ function RemoveShortcut {
 
 # Jump to a saved directory
 function JumpToShortcut {
-    CleanupExpiredShortcuts
     local input="$1"
 
     if [ -z "${input}" ]; then
@@ -150,24 +204,26 @@ function JumpToShortcut {
         if [ -r "${CONFIG_FILE}" ]; then
             local total shown i
             total=$(grep -c '^' "${CONFIG_FILE}")
+            local -a sorted
+            sorted=($(GetSortedKeywords))
             if [ "${total}" -le 10 ]; then
                 printf "\n${MAGENTA}Saved shortcuts:${RESET}\n"
                 i=1
-                while IFS='=' read -r key _ || [ -n "$key" ]; do
+                for key in "${sorted[@]}"; do
                     printf "  ${YELLOW}%2d${RESET}. ${BOLD_CYAN}%s${RESET}\n" \
-                        "${i}" "${key}"
+                        "${i}" "$key"
                     ((i++))
-                done <"${CONFIG_FILE}"
+                done
             else
                 shown=10
                 printf "\n${MAGENTA}Saved shortcuts (showing %d of %d):${RESET}\n" \
                     "${shown}" "${total}"
                 i=1
-                while IFS='=' read -r key _ && [ "${i}" -le "${shown}" ]; do
+                for key in "${sorted[@]:0:${shown}}"; do
                     printf "  ${YELLOW}%2d${RESET}. ${BOLD_CYAN}%s${RESET}\n" \
-                        "${i}" "${key}"
+                        "${i}" "$key"
                     ((i++))
-                done <"${CONFIG_FILE}"
+                done
                 printf "  … and %d more\n" "$((total - shown))"
             fi
         fi
@@ -183,6 +239,7 @@ function JumpToShortcut {
             printf "${GREEN}Changed directory to ${DIM_WHITE}%s${RESET}\n" "${basePath}"
             if [ "$runCode" -eq 1 ]; then code .; fi
         }
+        UpdateRecentUsage "${input}"
         return
     fi
 
@@ -216,6 +273,7 @@ function JumpToShortcut {
                     printf "${GREEN}Changed directory to ${DIM_WHITE}%s${RESET}\n" "${targetPath}"
                     if [ "$runCode" -eq 1 ]; then code .; fi
                 }
+                UpdateRecentUsage "${prefix}"
                 return
             fi
         fi
@@ -231,6 +289,9 @@ function to {
     fi
     if [ ! -f "${CONFIG_META_FILE}" ]; then
         : >"${CONFIG_META_FILE}"
+    fi
+    if [ ! -f "${RECENT_FILE}" ]; then
+        : >"${RECENT_FILE}"
     fi
     CleanupExpiredShortcuts
 
@@ -366,9 +427,7 @@ if [[ -n $ZSH_VERSION ]]; then
             ;;
         keywords)
             local -a keywords
-            while IFS='=' read -r key _; do
-                keywords+=("$key")
-            done <"$CONFIG_FILE"
+            keywords=($(GetSortedKeywords))
             compadd -- $keywords
             ;;
         esac
