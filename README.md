@@ -71,11 +71,11 @@
 The `to` command facilitates shortcut management and execution.
 
 **1. Adding a Shortcut**
-Register a new shortcut using `to --add <keyword> <path>` or the shorthand `to -a <keyword> <path>`. The specified path can be relative or absolute; relative paths will be resolved to their absolute form automatically.
+Register a new shortcut using `to --add <keyword> <path> [--expire <timestamp>]` or the shorthand `to -a <keyword> <path>`. The optional `--expire` flag sets an expiration time in epoch seconds. The specified path can be relative or absolute; relative paths will be resolved to their absolute form automatically.
 
 ```zsh
-❯ to --add proj ../my-project
-Added proj → ../my-project
+❯ to --add proj ../my-project --expire 1700000000
+Added proj → ../my-project (expires 1700000000)
 ```
 
 **2. Jumping to a Saved Directory**
@@ -153,6 +153,7 @@ Usage:
   to --list, -l                      List all shortcuts
   to --print-path, -p <keyword>      Print stored path only
   to --code, -c <keyword>            Open in VSCode after navigation
+  to --add <k> <path> --expire <ts>  Save shortcut with expiration
   to --help, -h                      Show this help
 
 Options:
@@ -161,6 +162,7 @@ Options:
   --rm, -r                           Remove shortcut
   --list, -l                         List shortcuts
   --print-path, -p                   Print path only
+  --expire                           Set expiration epoch time
   --code, -c                         Open in VSCode
   --help, -h                         Show help
 ```
@@ -173,6 +175,7 @@ Options:
 | `--rm <k>`          | `-r`  | Remove shortcut associated with `k`.|
 | `--list`            | `-l`  | List all saved shortcuts.           |
 | `--print-path <k>`  | `-p`  | Print stored or nested path using prefix matching.              |
+| `--expire <ts>`     |       | Expire the shortcut after the given epoch timestamp. |
 | `--code`            | `-c`  | Run `code .` in target directory after navigation. |
 | `--help`            | `-h`  | Show help message and usage.        |
 
@@ -180,6 +183,7 @@ Options:
 
 - Directory shortcuts are stored line by line in the `~/.to_dirs` file.
 - Each line follows the format: `keyword=absolute_path`.
+- Expiration timestamps are stored separately in `~/.to_dirs_meta` as `keyword=epoch_timestamp` entries.
 - While direct editing of `~/.to_dirs` is possible, using the `to --add` and `to --rm` commands ensures proper formatting and validation.
 
 ## Contributing
