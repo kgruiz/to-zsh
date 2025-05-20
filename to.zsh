@@ -12,6 +12,35 @@ if [[ -z $YELLOW ]]; then readonly YELLOW="${ESC}[0;33m"; fi
 if [[ -z $MAGENTA ]]; then readonly MAGENTA="${ESC}[0;35m"; fi
 
 CONFIG_FILE="${HOME}/.to_dirs"
+CONFIG_META_FILE="${HOME}/.to_dirs_meta"
+
+# Remove expired shortcuts from storage
+function CleanupExpiredShortcuts {
+    [ -f "${CONFIG_FILE}" ] || return
+    local now tmpcfg tmpmeta
+    now=$(date +%s)
+    tmpcfg="${CONFIG_FILE}.tmp"
+    tmpmeta="${CONFIG_META_FILE}.tmp"
+    >"${tmpcfg}"
+    >"${tmpmeta}" 2>/dev/null || true
+    while IFS='=' read -r key path || [ -n "$key" ]; do
+        local expiry=""
+        if [ -f "${CONFIG_META_FILE}" ]; then
+            expiry=$(grep -m1 "^${key}=" "${CONFIG_META_FILE}" | cut -d'=' -f2-)
+        fi
+        if [ -n "$expiry" ] && [ "$expiry" -le "$now" ]; then
+            continue
+        fi
+        printf '%s=%s\n' "$key" "$path" >>"${tmpcfg}"
+        if [ -n "$expiry" ]; then
+            printf '%s=%s\n' "$key" "$expiry" >>"${tmpmeta}"
+        fi
+    done <"${CONFIG_FILE}"
+    mv "${tmpcfg}" "${CONFIG_FILE}"
+    if [ -f "${tmpmeta}" ]; then
+        mv "${tmpmeta}" "${CONFIG_META_FILE}"
+    fi
+}
 
 # Show usage/help
 function To_ShowHelp {
@@ -19,7 +48,7 @@ function To_ShowHelp {
 
     printf "${MAGENTA}Usage:${RESET}\n"
     printf "  ${DIM_WHITE}to <keyword>                       ${RESET}Navigate to saved shortcut\n"
-    printf "  ${DIM_WHITE}to --add, -a <keyword> <path>     ${RESET} Save new shortcut\n"
+    printf "  ${DIM_WHITE}to --add, -a <keyword> <path> [--expire <timestamp>]     ${RESET} Save new shortcut\n"
     printf "  ${DIM_WHITE}to --rm,  -r <keyword>            ${RESET} Remove existing shortcut\n"
     printf "  ${DIM_WHITE}to --list, -l                     ${RESET} List all shortcuts\n"
     printf "  ${DIM_WHITE}to --print-path, -p <keyword>     ${RESET} Print stored path only\n"
@@ -32,12 +61,14 @@ function To_ShowHelp {
     printf "  ${BOLD_CYAN}--rm, -r                       ${RESET}    Remove shortcut\n"
     printf "  ${BOLD_CYAN}--list, -l                     ${RESET}    List shortcuts\n"
     printf "  ${BOLD_CYAN}--print-path, -p               ${RESET}    Print path only\n"
+    printf "  ${BOLD_CYAN}--expire <ts>                  ${RESET}    Set expiration epoch for shortcut\n"
     printf "  ${BOLD_CYAN}--code, -c                     ${RESET}    Open in VSCode\n"
     printf "  ${BOLD_CYAN}--help, -h                     ${RESET}    Show help\n"
 }
 
 # List all saved shortcuts
 function ListShortcuts {
+    CleanupExpiredShortcuts
     if [ ! -s "${CONFIG_FILE}" ]; then
         printf "${BOLD_RED}No shortcuts saved.${RESET}\n"
         return
@@ -52,6 +83,7 @@ function ListShortcuts {
 function AddShortcut {
     local keyword="$1"
     local targetPath="$2"
+    local expire="$3"
 
     if [ -z "${keyword}" ] || [ -z "${targetPath}" ]; then
         printf "${BOLD_RED}Usage: to --add <keyword> <path>${RESET}\n"
@@ -75,7 +107,15 @@ function AddShortcut {
     fi
 
     printf '%s\n' "${keyword}=${absPath}" >>"${CONFIG_FILE}"
-    printf "${GREEN}Added ${BOLD_CYAN}%s${RESET}${GREEN} → ${DIM_WHITE}%s${RESET}\n" "${keyword}" "${absPath}"
+    if [ -n "${expire}" ]; then
+        printf '%s\n' "${keyword}=${expire}" >>"${CONFIG_META_FILE}"
+        printf "${GREEN}Added ${BOLD_CYAN}%s${RESET}${GREEN} → ${DIM_WHITE}%s${RESET}${GREEN} (expires %s)${RESET}\n" "${keyword}" "${absPath}" "${expire}"
+    else
+        if grep -q "^${keyword}=" "${CONFIG_META_FILE}" 2>/dev/null; then
+            grep -v "^${keyword}=" "${CONFIG_META_FILE}" >"${CONFIG_META_FILE}.tmp" && mv "${CONFIG_META_FILE}.tmp" "${CONFIG_META_FILE}"
+        fi
+        printf "${GREEN}Added ${BOLD_CYAN}%s${RESET}${GREEN} → ${DIM_WHITE}%s${RESET}\n" "${keyword}" "${absPath}"
+    fi
 }
 
 # Remove an existing shortcut
@@ -93,11 +133,15 @@ function RemoveShortcut {
     fi
 
     grep -v "^${keyword}=" "${CONFIG_FILE}" >"${CONFIG_FILE}.tmp" && mv "${CONFIG_FILE}.tmp" "${CONFIG_FILE}"
+    if [ -f "${CONFIG_META_FILE}" ]; then
+        grep -v "^${keyword}=" "${CONFIG_META_FILE}" >"${CONFIG_META_FILE}.tmp" && mv "${CONFIG_META_FILE}.tmp" "${CONFIG_META_FILE}"
+    fi
     printf "${GREEN}Removed ${BOLD_CYAN}%s${RESET}${GREEN}.${RESET}\n" "${keyword}"
 }
 
 # Jump to a saved directory
 function JumpToShortcut {
+    CleanupExpiredShortcuts
     local input="$1"
 
     if [ -z "${input}" ]; then
@@ -185,12 +229,17 @@ function to {
     if [ ! -f "${CONFIG_FILE}" ]; then
         touch "${CONFIG_FILE}"
     fi
+    if [ ! -f "${CONFIG_META_FILE}" ]; then
+        : >"${CONFIG_META_FILE}"
+    fi
+    CleanupExpiredShortcuts
 
     local runCode=0
     local printPath=0
     local action=""
     local addKeyword=""
     local targetPath=""
+    local expireTime=""
     local removeKeyword=""
     local positional=()
 
@@ -218,6 +267,10 @@ function to {
                 shift
                 addKeyword="$1"
                 targetPath="$2"
+                shift 2
+                ;;
+            --expire)
+                expireTime="$2"
                 shift 2
                 ;;
             --rm|-r)
@@ -284,7 +337,7 @@ function to {
             ListShortcuts
             ;;
         add)
-            AddShortcut "$addKeyword" "$targetPath"
+            AddShortcut "$addKeyword" "$targetPath" "$expireTime"
             ;;
         remove)
             RemoveShortcut "$removeKeyword"
