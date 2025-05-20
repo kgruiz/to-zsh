@@ -185,6 +185,10 @@ Options:
 - Each line follows the format: `keyword=absolute_path`.
 - Expiration timestamps are stored separately in `~/.to_dirs_meta` as `keyword=epoch_timestamp` entries.
 - While direct editing of `~/.to_dirs` is possible, using the `to --add` and `to --rm` commands ensures proper formatting and validation.
+- User preferences can be defined in `~/.to_zsh_config`:
+  - `sort_order=added|alpha|recent` controls how shortcuts are listed and suggested.
+    The `recent` option uses timestamps stored in `~/.to_dirs_recent` which are
+    updated each time a shortcut is used.
 
 ## Contributing
 
