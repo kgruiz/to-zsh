@@ -24,8 +24,8 @@ function CleanupExpiredShortcuts {
     now=$(date +%s)
     tmpcfg="${CONFIG_FILE}.tmp"
     tmpmeta="${CONFIG_META_FILE}.tmp"
-    >"${tmpcfg}"
-    >"${tmpmeta}" 2>/dev/null || true
+    : >"${tmpcfg}"
+    : >"${tmpmeta}" 2>/dev/null || true
     while IFS='=' read -r key path || [ -n "$key" ]; do
         local expiry=""
         if [ -f "${CONFIG_META_FILE}" ]; then
@@ -415,16 +415,19 @@ if [[ -n $ZSH_VERSION ]]; then
 
     _to() {
 
-        local state
+        local context state line
         typeset -A opt_args
-        _arguments \
-            '1:command:->cmds' \
-            '*:keyword:->keywords'
+        _arguments -s -C \
+            '(-h --help)'{-h,--help}'[show help]' \
+            '(-l --list)'{-l,--list}'[list shortcuts]' \
+            '(-c --code)'{-c,--code}'[open in VSCode]' \
+            '(-p --print-path)'{-p,--print-path}'[print stored path]:keyword:->keywords' \
+            '(-a --add)'{-a,--add}'[add shortcut]:keyword:->keywords :path:_files -/' \
+            '--expire[expiration timestamp]:timestamp:' \
+            '(-r --rm)'{-r,--rm}'[remove shortcut]:keyword:->keywords' \
+            '*:keyword:->keywords' && return
 
         case $state in
-        cmds)
-            compadd -- --help -h --list -l --add -a --rm -r
-            ;;
         keywords)
             local -a keywords
             keywords=($(GetSortedKeywords))
