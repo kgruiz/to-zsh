@@ -20,5 +20,9 @@ if ! whence -f _to | grep -q -- '--add-bulk'; then
     echo "completion missing --add-bulk" >&2
     exit 1
 fi
+if ! whence -f _to | grep -q -- '--copy'; then
+    echo "completion missing --copy" >&2
+    exit 1
+fi
 
 echo "tests passed"

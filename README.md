@@ -19,7 +19,7 @@
 - **Iterative Prefix Matching:** Supports nested subdirectory navigation by matching the longest saved keyword prefix and appending the remainder.
 - **Automatic Editor Launch:** Use `-c`/`--code` to automatically run `code .` after changing directories.
 - **Shell Autocomplete:** Tab-completion for commands and saved keywords.
-- **Simple Shortcut Management:** Easily add (`--add`/`-a`), add in bulk (`--add-bulk`), remove (`--rm`/`-r`), and list (`--list`/`-l`) your shortcuts.
+- **Simple Shortcut Management:** Easily add (`--add`/`-a`), add in bulk (`--add-bulk`), copy (`--copy`), remove (`--rm`/`-r`), and list (`--list`/`-l`) your shortcuts.
 - **Relative Path Support:** Accepts relative or absolute directory paths, resolving relative paths to their absolute form automatically.
 - **Persistent Storage:** Shortcuts are stored in `~/.to_dirs`, ensuring they persist across shell sessions.
 - **Lightweight Integration:** Implemented as a single Zsh script file.
@@ -162,6 +162,7 @@ Usage:
   to --add, -a <keyword> <path>      Save new shortcut
   to --add <path>                    Save shortcut using directory name
   to --add-bulk <pattern>           Add shortcuts for each matching directory
+  to --copy <existing> <new>        Duplicate a saved shortcut
   to --rm,  -r <keyword>             Remove existing shortcut
   to --list, -l                      List all shortcuts
   to --print-path, -p <keyword>      Print stored path only
@@ -173,6 +174,7 @@ Options:
   keyword                            Shortcut name
   --add, -a                          Add new shortcut
   --add-bulk                         Add shortcuts from pattern
+  --copy                             Duplicate a shortcut
   --rm, -r                           Remove shortcut
   --list, -l                         List shortcuts
   --print-path, -p                   Print path only
@@ -187,6 +189,7 @@ Options:
 |---------------------|-------|-------------------------------------|
 | `--add [<k>] <path>`| `-a`  | Add a new shortcut; if `k` is omitted the directory name is used. |
 | `--add-bulk <pattern>` |       | Add shortcuts for each directory matching `pattern`. |
+| `--copy <existing> <new>` |       | Duplicate a saved shortcut. |
 | `--rm <k>`          | `-r`  | Remove shortcut associated with `k`.|
 | `--list`            | `-l`  | List all saved shortcuts.           |
 | `--print-path <k>`  | `-p`  | Print stored or nested path using prefix matching.              |

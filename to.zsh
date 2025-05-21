@@ -105,6 +105,7 @@ function To_ShowHelp {
     printf "  ${DIM_WHITE}to --add, -a <keyword> <path> [--expire <timestamp>]     ${RESET} Save new shortcut\n"
     printf "  ${DIM_WHITE}to --add <path> [--expire <timestamp>]            ${RESET} Save shortcut using directory name as keyword\n"
     printf "  ${DIM_WHITE}to --add-bulk <pattern>           ${RESET} Add shortcuts for each matching directory\n"
+    printf "  ${DIM_WHITE}to --copy <existing> <new>         ${RESET} Duplicate shortcut\n"
     printf "  ${DIM_WHITE}to --rm,  -r <keyword>            ${RESET} Remove existing shortcut\n"
     printf "  ${DIM_WHITE}to --list, -l                     ${RESET} List all shortcuts\n"
     printf "  ${DIM_WHITE}to --print-path, -p <keyword>     ${RESET} Print stored path only\n"
@@ -115,6 +116,7 @@ function To_ShowHelp {
     printf "  ${BOLD_CYAN}keyword                        ${RESET}    Shortcut name\n"
     printf "  ${BOLD_CYAN}--add, -a                      ${RESET}    Add new shortcut\n"
     printf "  ${BOLD_CYAN}--add-bulk <pattern>           ${RESET}    Add shortcuts from pattern\n"
+    printf "  ${BOLD_CYAN}--copy <existing> <new>        ${RESET}    Duplicate shortcut\n"
     printf "  ${BOLD_CYAN}--rm, -r                       ${RESET}    Remove shortcut\n"
     printf "  ${BOLD_CYAN}--list, -l                     ${RESET}    List shortcuts\n"
     printf "  ${BOLD_CYAN}--print-path, -p               ${RESET}    Print path only\n"
@@ -206,6 +208,40 @@ function AddBulkShortcuts {
             AddShortcut "${dir}"
         fi
     done
+}
+
+# Copy an existing shortcut to a new keyword or path
+function CopyShortcut {
+    local existing="$1"
+    local new="$2"
+
+    if [ -z "${existing}" ] || [ -z "${new}" ]; then
+        printf "${BOLD_RED}Usage: to --copy <existing> <new>${RESET}\n"
+        return
+    fi
+
+    if ! grep -q "^${existing}=" "${CONFIG_FILE}" 2>/dev/null; then
+        printf "${BOLD_RED}Error: Keyword '%s' not found.${RESET}\n" "${existing}"
+        return
+    fi
+
+    local srcPath destKey destPath
+    srcPath=$(grep -m1 "^${existing}=" "${CONFIG_FILE}" | cut -d'=' -f2-)
+
+    if [ -d "${new}" ] || [[ "${new}" == /* ]]; then
+        destPath="${new}"
+        destKey="$(basename -- "${destPath}")"
+    else
+        destKey="${new}"
+        destPath="${srcPath}"
+    fi
+
+    if grep -q "^${destKey}=" "${CONFIG_FILE}" 2>/dev/null; then
+        printf "${BOLD_RED}Error: Keyword '%s' already exists.${RESET}\n" "${destKey}"
+        return
+    fi
+
+    AddShortcut "${destKey}" "${destPath}"
 }
 
 # Remove an existing shortcut
@@ -338,6 +374,8 @@ function to {
     local expireTime=""
     local removeKeyword=""
     local bulkPattern=""
+    local copyExisting=""
+    local copyNew=""
     local positional=()
 
     # parse flags in any position
@@ -376,6 +414,13 @@ function to {
                 shift
                 bulkPattern="$1"
                 shift
+                ;;
+            --copy)
+                action="copy"
+                shift
+                copyExisting="$1"
+                copyNew="$2"
+                shift 2
                 ;;
             --expire)
                 expireTime="$2"
@@ -450,6 +495,9 @@ function to {
         add-bulk)
             AddBulkShortcuts "$bulkPattern"
             ;;
+        copy)
+            CopyShortcut "$copyExisting" "$copyNew"
+            ;;
         remove)
             RemoveShortcut "$removeKeyword"
             ;;
@@ -474,6 +522,7 @@ if [[ -n $ZSH_VERSION ]]; then
             '(-p --print-path)'{-p,--print-path}'[print stored path]:keyword:->keywords' \
             '(-a --add)'{-a,--add}'[add shortcut]:keyword:->keywords :path:_files -/' \
             '--add-bulk[add shortcuts from pattern]:pattern:' \
+            '--copy[copy existing shortcut]:existing keyword:->keywords :new:' \
             '--expire[expiration timestamp]:timestamp:' \
             '(-r --rm)'{-r,--rm}'[remove shortcut]:keyword:->keywords' \
             '*:keyword:->keywords' && return
