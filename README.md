@@ -71,11 +71,13 @@
 The `to` command facilitates shortcut management and execution.
 
 **1. Adding a Shortcut**
-Register a new shortcut using `to --add <keyword> <path> [--expire <timestamp>]` or the shorthand `to -a <keyword> <path>`. The optional `--expire` flag sets an expiration time in epoch seconds. The specified path can be relative or absolute; relative paths will be resolved to their absolute form automatically.
+Register a new shortcut using `to --add <keyword> <path> [--expire <timestamp>]`, the shorthand `to -a <keyword> <path>`, or simply `to --add <path>` which uses the directory name as the keyword automatically. The optional `--expire` flag sets an expiration time in epoch seconds. The specified path can be relative or absolute; relative paths will be resolved to their absolute form automatically.
 
 ```zsh
 ❯ to --add proj ../my-project --expire 1700000000
 Added proj → ../my-project (expires 1700000000)
+❯ to --add ../another-project
+Added another-project → ../another-project
 ```
 
 **2. Jumping to a Saved Directory**
@@ -149,6 +151,7 @@ to - Persistent Directory Shortcuts
 Usage:
   to <keyword>                       Navigate to saved shortcut
   to --add, -a <keyword> <path>      Save new shortcut
+  to --add <path>                    Save shortcut using directory name
   to --rm,  -r <keyword>             Remove existing shortcut
   to --list, -l                      List all shortcuts
   to --print-path, -p <keyword>      Print stored path only
@@ -171,7 +174,7 @@ Options:
 
 | Option              | Short | Description                         |
 |---------------------|-------|-------------------------------------|
-| `--add <k> <path>`  | `-a`  | Add a new shortcut `k` → `path`.    |
+| `--add [<k>] <path>`| `-a`  | Add a new shortcut; if `k` is omitted the directory name is used. |
 | `--rm <k>`          | `-r`  | Remove shortcut associated with `k`.|
 | `--list`            | `-l`  | List all saved shortcuts.           |
 | `--print-path <k>`  | `-p`  | Print stored or nested path using prefix matching.              |
