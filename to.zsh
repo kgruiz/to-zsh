@@ -103,6 +103,7 @@ function To_ShowHelp {
     printf "${MAGENTA}Usage:${RESET}\n"
     printf "  ${DIM_WHITE}to <keyword>                       ${RESET}Navigate to saved shortcut\n"
     printf "  ${DIM_WHITE}to --add, -a <keyword> <path> [--expire <timestamp>]     ${RESET} Save new shortcut\n"
+    printf "  ${DIM_WHITE}to --add <path> [--expire <timestamp>]            ${RESET} Save shortcut using directory name as keyword\n"
     printf "  ${DIM_WHITE}to --rm,  -r <keyword>            ${RESET} Remove existing shortcut\n"
     printf "  ${DIM_WHITE}to --list, -l                     ${RESET} List all shortcuts\n"
     printf "  ${DIM_WHITE}to --print-path, -p <keyword>     ${RESET} Print stored path only\n"
@@ -139,6 +140,13 @@ function AddShortcut {
     local keyword="$1"
     local targetPath="$2"
     local expire="$3"
+
+    # When only one argument is provided, treat it as the path and derive
+    # the keyword from the final directory component.
+    if [ -z "${targetPath}" ]; then
+        targetPath="$keyword"
+        keyword="$(basename -- "${targetPath}")"
+    fi
 
     if [ -z "${keyword}" ] || [ -z "${targetPath}" ]; then
         printf "${BOLD_RED}Usage: to --add <keyword> <path>${RESET}\n"
@@ -327,8 +335,13 @@ function to {
                 action="add"
                 shift
                 addKeyword="$1"
-                targetPath="$2"
-                shift 2
+                if [[ $# -ge 2 && $2 != -* ]]; then
+                    targetPath="$2"
+                    shift 2
+                else
+                    targetPath=""
+                    shift 1
+                fi
                 ;;
             --expire)
                 expireTime="$2"
