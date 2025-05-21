@@ -28,5 +28,13 @@ if ! whence -f _to | grep -q -- '--no-create'; then
     echo "completion missing --no-create" >&2
     exit 1
 fi
+if ! whence -f _to | grep -q '_path_files'; then
+    echo "completion missing _path_files" >&2
+    exit 1
+fi
+if ! whence -f _to | grep -q 'GetSortedKeywords'; then
+    echo "completion missing GetSortedKeywords" >&2
+    exit 1
+fi
 
 echo "tests passed"
