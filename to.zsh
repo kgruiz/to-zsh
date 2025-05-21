@@ -101,30 +101,32 @@ function To_ShowHelp {
     printf "${YELLOW}to - Persistent Directory Shortcuts${RESET}\n\n"
 
     printf "${MAGENTA}Usage:${RESET}\n"
-    printf "  ${DIM_WHITE}to <keyword>                       ${RESET}Navigate to saved shortcut\n"
-    printf "  ${DIM_WHITE}to --add, -a <keyword> <path> [--expire <timestamp>]     ${RESET} Save new shortcut\n"
-    printf "  ${DIM_WHITE}to --add <path> [--expire <timestamp>]            ${RESET} Save shortcut using directory name as keyword\n"
-    printf "  ${DIM_WHITE}to --add-bulk <pattern>           ${RESET} Add shortcuts for each matching directory\n"
-    printf "  ${DIM_WHITE}to --copy <existing> <new>         ${RESET} Duplicate shortcut\n"
-    printf "  ${DIM_WHITE}to --rm,  -r <keyword>            ${RESET} Remove existing shortcut\n"
-    printf "  ${DIM_WHITE}to --list, -l                     ${RESET} List all shortcuts\n"
-    printf "  ${DIM_WHITE}to --print-path, -p <keyword>     ${RESET} Print stored path only\n"
-    printf "  ${DIM_WHITE}to --code, -c <keyword>           ${RESET} Open in VSCode after navigation\n"
-    printf "  ${DIM_WHITE}to --no-create                  ${RESET} Do not create nested path on jump\n"
-    printf "  ${DIM_WHITE}to --help, -h                     ${RESET} Show this help\n\n"
+    printf "  ${DIM_WHITE}%-55s${RESET}%s\n" "to <keyword>" "Navigate to saved shortcut"
+    printf "  ${DIM_WHITE}%-55s${RESET}%s\n" "to --add, -a <keyword> <path> [--expire <timestamp>]" "Save new shortcut"
+    printf "  ${DIM_WHITE}%-55s${RESET}%s\n" "to --add <path> [--expire <timestamp>]" "Save shortcut using directory name as keyword"
+    printf "  ${DIM_WHITE}%-55s${RESET}%s\n" "to --add-bulk <pattern>" "Add shortcuts for each matching directory"
+    printf "  ${DIM_WHITE}%-55s${RESET}%s\n" "to --copy <existing> <new>" "Duplicate shortcut"
+    printf "  ${DIM_WHITE}%-55s${RESET}%s\n" "to --rm, -r <keyword>" "Remove existing shortcut"
+    printf "  ${DIM_WHITE}%-55s${RESET}%s\n" "to --list, -l" "List all shortcuts"
+    printf "  ${DIM_WHITE}%-55s${RESET}%s\n" "to --print-path, -p <keyword>" "Print stored path only"
+    printf "  ${DIM_WHITE}%-55s${RESET}%s\n" "to --code, -c <keyword>" "Open in VSCode after navigation"
+    printf "  ${DIM_WHITE}%-55s${RESET}%s\n" "to --no-create" "Do not create nested path on jump"
+    printf "  ${DIM_WHITE}%-55s${RESET}%s\n\n" "to --help, -h" "Show this help"
 
     printf "${MAGENTA}Options:${RESET}\n"
-    printf "  ${BOLD_CYAN}keyword                        ${RESET}    Shortcut name\n"
-    printf "  ${BOLD_CYAN}--add, -a                      ${RESET}    Add new shortcut\n"
-    printf "  ${BOLD_CYAN}--add-bulk <pattern>           ${RESET}    Add shortcuts from pattern\n"
-    printf "  ${BOLD_CYAN}--copy <existing> <new>        ${RESET}    Duplicate shortcut\n"
-    printf "  ${BOLD_CYAN}--rm, -r                       ${RESET}    Remove shortcut\n"
-    printf "  ${BOLD_CYAN}--list, -l                     ${RESET}    List shortcuts\n"
-    printf "  ${BOLD_CYAN}--print-path, -p               ${RESET}    Print path only\n"
-    printf "  ${BOLD_CYAN}--expire <ts>                  ${RESET}    Set expiration epoch for shortcut\n"
-    printf "  ${BOLD_CYAN}--code, -c                     ${RESET}    Open in VSCode\n"
-    printf "  ${BOLD_CYAN}--no-create                    ${RESET}    Disable path creation on jump\n"
-    printf "  ${BOLD_CYAN}--help, -h                     ${RESET}    Show help\n"
+    printf "  ${BOLD_CYAN}%-30s${RESET}%s\n" "keyword" "Shortcut name"
+    printf "  ${BOLD_CYAN}%-30s${RESET}%s\n" "--add, -a" "Add new shortcut"
+    printf "  ${BOLD_CYAN}%-30s${RESET}%s\n" "--add-bulk <pattern>" "Add shortcuts from pattern"
+    printf "  ${BOLD_CYAN}%-30s${RESET}%s\n" "--copy <existing> <new>" "Duplicate shortcut"
+    printf "  ${BOLD_CYAN}%-30s${RESET}%s\n" "--rm, -r" "Remove shortcut"
+    printf "  ${BOLD_CYAN}%-30s${RESET}%s\n" "--list, -l" "List shortcuts"
+    printf "  ${BOLD_CYAN}%-30s${RESET}%s\n" "--print-path, -p" "Print path only"
+    printf "  ${BOLD_CYAN}%-30s${RESET}%s\n" "--expire <ts>" "Set expiration epoch for shortcut"
+    printf "  ${BOLD_CYAN}%-30s${RESET}%s\n" "--code, -c" "Open in VSCode"
+    printf "  ${BOLD_CYAN}%-30s${RESET}%s\n" "--no-create" "Disable path creation on jump"
+    printf "  ${BOLD_CYAN}%-30s${RESET}%s\n" "--help, -h" "Show help"
+
+    DisplaySavedShortcuts
 }
 
 # List all saved shortcuts
@@ -139,6 +141,51 @@ function ListShortcuts {
         targetPath=$(grep -m1 "^${keyword}=" "${CONFIG_FILE}" | cut -d'=' -f2-)
         printf "${BOLD_CYAN}%s${RESET} → ${DIM_WHITE}%s${RESET}\n" "$keyword" "$targetPath"
     done < <(GetSortedKeywords)
+}
+
+# Display saved shortcuts in a 3-column layout
+function DisplaySavedShortcuts {
+    [ -r "${CONFIG_FILE}" ] || return
+
+    local total shown cols rows maxlen idx key width i colsIndex
+    local -a sorted
+
+    sorted=($(GetSortedKeywords))
+    total=${#sorted[@]}
+    shown=$(( total < 30 ? total : 30 ))
+
+    maxlen=0
+    for ((idx=1; idx<=shown; idx++)); do
+        key="${sorted[idx]}"
+        if [ ${#key} -gt "${maxlen}" ]; then
+            maxlen=${#key}
+        fi
+    done
+    width=$((maxlen + 2))
+
+    cols=3
+    rows=$(( (shown + cols - 1) / cols ))
+
+    if [ "${total}" -le 30 ]; then
+        printf "\n${MAGENTA}Saved shortcuts:${RESET}\n"
+    else
+        printf "\n${MAGENTA}Saved shortcuts (showing %d of %d):${RESET}\n" "${shown}" "${total}"
+    fi
+
+    for ((i=1; i<=rows; i++)); do
+        for ((colsIndex=1; colsIndex<=cols; colsIndex++)); do
+            idx=$(( (colsIndex - 1) * rows + i ))
+            if [ ${idx} -le ${shown} ]; then
+                key="${sorted[idx]}"
+                printf "  ${YELLOW}%2d${RESET}. ${BOLD_CYAN}%-${width}s${RESET}" "${idx}" "$key"
+            fi
+        done
+        printf "\n"
+    done
+
+    if [ "${total}" -gt "${shown}" ]; then
+        printf "  … and %d more\n" "$((total - shown))"
+    fi
 }
 
 # Add a new shortcut
@@ -274,50 +321,6 @@ function JumpToShortcut {
 
     if [ -z "${input}" ]; then
         To_ShowHelp
-        # show up to 30 saved keywords in three columns
-        if [ -r "${CONFIG_FILE}" ]; then
-            local total shown i cols rows maxlen idx key width colsIndex
-            local -a sorted
-
-            sorted=($(GetSortedKeywords))
-            total=${#sorted[@]}
-            shown=$(( total < 30 ? total : 30 ))
-
-            maxlen=0
-            for key in "${sorted[@]:0:${shown}}"; do
-                if [ ${#key} -gt "${maxlen}" ]; then
-                    maxlen=${#key}
-                fi
-            done
-            width=$((maxlen + 2))
-
-            cols=3
-            rows=$(( (shown + cols - 1) / cols ))
-
-            if [ "${total}" -le 30 ]; then
-                printf "\n${MAGENTA}Saved shortcuts:${RESET}\n"
-            else
-                printf "\n${MAGENTA}Saved shortcuts (showing %d of %d):${RESET}\n" \
-                    "${shown}" "${total}"
-            fi
-
-            for ((i=0; i<rows; i++)); do
-                for ((colsIndex=0; colsIndex<cols; colsIndex++)); do
-                    idx=$((colsIndex * rows + i))
-                    if [ ${idx} -lt ${shown} ]; then
-                        key="${sorted[idx]}"
-                        printf "  ${YELLOW}%2d${RESET}. ${BOLD_CYAN}%-${width}s${RESET}" \
-                            "$((idx + 1))" "$key"
-                    fi
-                done
-                printf "\n"
-            done
-
-            if [ "${total}" -gt "${shown}" ]; then
-                printf "  … and %d more\n" "$((total - shown))"
-            fi
-        fi
-
         return
     fi
 
