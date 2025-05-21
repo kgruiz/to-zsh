@@ -16,6 +16,7 @@ CONFIG_META_FILE="${HOME}/.to_dirs_meta"
 USER_CONFIG_FILE="${HOME}/.to_zsh_config"
 RECENT_FILE="${HOME}/.to_dirs_recent"
 USER_SORT_ORDER="added"
+SORT_OVERRIDE=""
 
 # Remove expired shortcuts from storage
 function CleanupExpiredShortcuts {
@@ -56,6 +57,9 @@ function LoadUserConfig {
                     ;;
             esac
         done <"${USER_CONFIG_FILE}"
+    fi
+    if [ -n "$SORT_OVERRIDE" ]; then
+        USER_SORT_ORDER="$SORT_OVERRIDE"
     fi
 }
 
@@ -111,6 +115,7 @@ function To_ShowHelp {
     printf "  ${DIM_WHITE}%-55s${RESET}%s\n" "to --print-path, -p <keyword>" "Print stored path only"
     printf "  ${DIM_WHITE}%-55s${RESET}%s\n" "to --code, -c <keyword>" "Open in VSCode after navigation"
     printf "  ${DIM_WHITE}%-55s${RESET}%s\n" "to --no-create" "Do not create nested path on jump"
+    printf "  ${DIM_WHITE}%-55s${RESET}%s\n" "to --sort, -s <mode>" "Override sorting mode"
     printf "  ${DIM_WHITE}%-55s${RESET}%s\n\n" "to --help, -h" "Show this help"
 
     printf "${MAGENTA}Options:${RESET}\n"
@@ -124,6 +129,7 @@ function To_ShowHelp {
     printf "  ${BOLD_CYAN}%-30s${RESET}%s\n" "--expire <ts>" "Set expiration epoch for shortcut"
     printf "  ${BOLD_CYAN}%-30s${RESET}%s\n" "--code, -c" "Open in VSCode"
     printf "  ${BOLD_CYAN}%-30s${RESET}%s\n" "--no-create" "Disable path creation on jump"
+    printf "  ${BOLD_CYAN}%-30s${RESET}%s\n" "--sort, -s" "Override sorting mode"
     printf "  ${BOLD_CYAN}%-30s${RESET}%s\n" "--help, -h" "Show help"
 
     DisplaySavedShortcuts
@@ -402,6 +408,8 @@ function to {
     fi
     CleanupExpiredShortcuts
 
+    SORT_OVERRIDE=""
+
     local runCode=0
     local printPath=0
     local createFlag=1
@@ -413,6 +421,7 @@ function to {
     local bulkPattern=""
     local copyExisting=""
     local copyNew=""
+    local sortOverride=""
     local positional=()
 
     # parse flags in any position
@@ -467,6 +476,10 @@ function to {
                 createFlag=0
                 shift
                 ;;
+            --sort|-s)
+                sortOverride="$2"
+                shift 2
+                ;;
             --rm|-r)
                 action="remove"
                 shift
@@ -479,6 +492,8 @@ function to {
                 ;;
         esac
     done
+
+    SORT_OVERRIDE="$sortOverride"
 
     if [[ $printPath -eq 1 ]]; then
         # handle print-path action
@@ -566,6 +581,7 @@ if [[ -n $ZSH_VERSION ]]; then
             '--copy[copy existing shortcut]:existing keyword:->keywords :new:' \
             '--expire[expiration timestamp]:timestamp:' \
             '--no-create[do not create missing directories]' \
+            '(-s --sort)'{-s,--sort}'[override sorting]:mode:(added alpha recent)' \
             '(-r --rm)'{-r,--rm}'[remove shortcut]:keyword:->keywords' \
             '*:keyword:->keywords' && return
 
