@@ -16,7 +16,6 @@ CONFIG_META_FILE="${HOME}/.to_dirs_meta"
 USER_CONFIG_FILE="${HOME}/.to_zsh_config"
 RECENT_FILE="${HOME}/.to_dirs_recent"
 USER_SORT_ORDER="added"
-SORT_OVERRIDE=""
 
 # Remove expired shortcuts from storage
 function CleanupExpiredShortcuts {
@@ -58,9 +57,25 @@ function LoadUserConfig {
             esac
         done <"${USER_CONFIG_FILE}"
     fi
-    if [ -n "$SORT_OVERRIDE" ]; then
-        USER_SORT_ORDER="$SORT_OVERRIDE"
-    fi
+}
+
+# Persist new sorting mode to the user config
+function SetSortOrder {
+    local mode="$1"
+    case "$mode" in
+        added|alpha|recent)
+            ;;
+        *)
+            printf "${BOLD_RED}Invalid sort mode '%s'. Use added, alpha, or recent.${RESET}\n" "$mode" >&2
+            return 1
+            ;;
+    esac
+
+    USER_SORT_ORDER="$mode"
+    local tmp="${USER_CONFIG_FILE}.tmp"
+    [ -f "${USER_CONFIG_FILE}" ] && grep -v '^sort_order=' "${USER_CONFIG_FILE}" >"${tmp}" || : >"${tmp}"
+    printf 'sort_order=%s\n' "$mode" >>"${tmp}"
+    mv "${tmp}" "${USER_CONFIG_FILE}"
 }
 
 # Return saved keywords sorted per user preference
@@ -115,7 +130,7 @@ function To_ShowHelp {
     printf "  ${DIM_WHITE}%-55s${RESET}%s\n" "to --print-path, -p <keyword>" "Print stored path only"
     printf "  ${DIM_WHITE}%-55s${RESET}%s\n" "to --code, -c <keyword>" "Open in VSCode after navigation"
     printf "  ${DIM_WHITE}%-55s${RESET}%s\n" "to --no-create" "Do not create nested path on jump"
-    printf "  ${DIM_WHITE}%-55s${RESET}%s\n" "to --sort, -s <mode>" "Override sorting mode"
+    printf "  ${DIM_WHITE}%-55s${RESET}%s\n" "to --sort, -s <mode>" "Set sorting mode (added | alpha | recent)"
     printf "  ${DIM_WHITE}%-55s${RESET}%s\n\n" "to --help, -h" "Show this help"
 
     printf "${MAGENTA}Options:${RESET}\n"
@@ -129,10 +144,12 @@ function To_ShowHelp {
     printf "  ${BOLD_CYAN}%-30s${RESET}%s\n" "--expire <ts>" "Set expiration epoch for shortcut"
     printf "  ${BOLD_CYAN}%-30s${RESET}%s\n" "--code, -c" "Open in VSCode"
     printf "  ${BOLD_CYAN}%-30s${RESET}%s\n" "--no-create" "Disable path creation on jump"
-    printf "  ${BOLD_CYAN}%-30s${RESET}%s\n" "--sort, -s" "Override sorting mode"
+    printf "  ${BOLD_CYAN}%-30s${RESET}%s\n" "--sort, -s" "Set sorting mode"
     printf "  ${BOLD_CYAN}%-30s${RESET}%s\n" "--help, -h" "Show help"
 
     DisplaySavedShortcuts
+    LoadUserConfig
+    printf "\nCurrent sorting mode: %s (from %s)\n" "$USER_SORT_ORDER" "$USER_CONFIG_FILE"
 }
 
 # List all saved shortcuts
@@ -408,8 +425,6 @@ function to {
     fi
     CleanupExpiredShortcuts
 
-    SORT_OVERRIDE=""
-
     local runCode=0
     local printPath=0
     local createFlag=1
@@ -421,7 +436,7 @@ function to {
     local bulkPattern=""
     local copyExisting=""
     local copyNew=""
-    local sortOverride=""
+    local newSortMode=""
     local positional=()
 
     # parse flags in any position
@@ -477,7 +492,7 @@ function to {
                 shift
                 ;;
             --sort|-s)
-                sortOverride="$2"
+                newSortMode="$2"
                 shift 2
                 ;;
             --rm|-r)
@@ -493,7 +508,9 @@ function to {
         esac
     done
 
-    SORT_OVERRIDE="$sortOverride"
+    if [ -n "$newSortMode" ]; then
+        SetSortOrder "$newSortMode" || return
+    fi
 
     if [[ $printPath -eq 1 ]]; then
         # handle print-path action
@@ -581,7 +598,7 @@ if [[ -n $ZSH_VERSION ]]; then
             '--copy[copy existing shortcut]:existing keyword:->keywords :new:' \
             '--expire[expiration timestamp]:timestamp:' \
             '--no-create[do not create missing directories]' \
-            '(-s --sort)'{-s,--sort}'[override sorting]:mode:(added alpha recent)' \
+            '(-s --sort)'{-s,--sort}'[set sorting mode]:mode:(added alpha recent)' \
             '(-r --rm)'{-r,--rm}'[remove shortcut]:keyword:->keywords' \
             '*:keyword:->keywords' && return
 
