@@ -552,6 +552,18 @@ if [[ -n $ZSH_VERSION ]]; then
 
         case $state in
         keywords)
+            local cur=${words[CURRENT]}
+            if [[ $cur == */* ]]; then
+                local key=${cur%%/*}
+                local rest=${cur#*/}
+                local base
+                base=$(grep -m1 "^${key}=" "${CONFIG_FILE}" 2>/dev/null | cut -d'=' -f2-)
+                if [[ -n $base ]]; then
+                    _path_files -W "$base" -/ "$rest"
+                    return
+                fi
+            fi
+
             local -a keywords
             keywords=($(GetSortedKeywords))
             compadd -- $keywords
