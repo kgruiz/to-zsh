@@ -156,15 +156,15 @@ function AddShortcut {
 
     if [ -z "${keyword}" ] || [ -z "${targetPath}" ]; then
         printf "${BOLD_RED}Usage: to --add <keyword> <path>${RESET}\n"
-        return
+        return 1
     fi
 
     if [ ! -e "${targetPath}" ]; then
         printf "${BOLD_RED}Error: Path '%s' does not exist.${RESET}\n" "${targetPath}"
-        return
+        return 1
     elif [ ! -d "${targetPath}" ]; then
         printf "${BOLD_RED}Error: Path '%s' exists but is not a directory.${RESET}\n" "${targetPath}"
-        return
+        return 1
     fi
 
     local absPath
@@ -172,7 +172,7 @@ function AddShortcut {
 
     if grep -q "^${keyword}=" "${CONFIG_FILE}" 2>/dev/null; then
         printf "${BOLD_RED}Error: Keyword '%s' already exists.${RESET}\n" "${keyword}"
-        return
+        return 1
     fi
 
     printf '%s\n' "${keyword}=${absPath}" >>"${CONFIG_FILE}"
@@ -350,17 +350,24 @@ function JumpToShortcut {
                 UpdateRecentUsage "${prefix}"
                 return
             elif [ "$create" -eq 1 ]; then
-                mkdir -p "${targetPath}" && cd "${targetPath}" && {
+                if mkdir -p "${targetPath}" && cd "${targetPath}"; then
                     printf "${GREEN}Created and changed directory to ${DIM_WHITE}%s${RESET}\n" "${targetPath}"
                     if [ "$runCode" -eq 1 ]; then code .; fi
-                }
-                UpdateRecentUsage "${prefix}"
-                return
+                    UpdateRecentUsage "${prefix}"
+                    return
+                else
+                    printf "${BOLD_RED}Error: Failed to create '%s'.${RESET}\n" "${targetPath}" >&2
+                    return 1
+                fi
+            else
+                printf "${BOLD_RED}Error: Resolved path '%s' does not exist.${RESET}\n" "${targetPath}" >&2
+                return 1
             fi
         fi
     done
 
     printf "${BOLD_RED}Error: Shortcut or path '%s' not found.${RESET}\n" "${input}" >&2
+    return 1
 }
 
 # Main entrypoint
