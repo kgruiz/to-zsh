@@ -19,7 +19,7 @@
 - **Iterative Prefix Matching:** Supports nested subdirectory navigation by matching the longest saved keyword prefix and appending the remainder.
 - **Automatic Editor Launch:** Use `-c`/`--code` to automatically run `code .` after changing directories.
 - **Shell Autocomplete:** Tab-completion for commands and saved keywords.
-- **Simple Shortcut Management:** Easily add (`--add`/`-a`), remove (`--rm`/`-r`), and list (`--list`/`-l`) your shortcuts.
+- **Simple Shortcut Management:** Easily add (`--add`/`-a`), add in bulk (`--add-bulk`), remove (`--rm`/`-r`), and list (`--list`/`-l`) your shortcuts.
 - **Relative Path Support:** Accepts relative or absolute directory paths, resolving relative paths to their absolute form automatically.
 - **Persistent Storage:** Shortcuts are stored in `~/.to_dirs`, ensuring they persist across shell sessions.
 - **Lightweight Integration:** Implemented as a single Zsh script file.
@@ -78,6 +78,15 @@ Register a new shortcut using `to --add <keyword> <path> [--expire <timestamp>]`
 Added proj → ../my-project (expires 1700000000)
 ❯ to --add ../another-project
 Added another-project → ../another-project
+```
+
+**Bulk Adding Shortcuts**
+Use `to --add-bulk <pattern>` to add shortcuts for each directory that matches the given glob pattern. The keyword defaults to the directory name.
+
+```zsh
+❯ to --add-bulk ../projects/*
+Added alpha → /absolute/path/projects/alpha
+Added beta → /absolute/path/projects/beta
 ```
 
 **2. Jumping to a Saved Directory**
@@ -152,6 +161,7 @@ Usage:
   to <keyword>                       Navigate to saved shortcut
   to --add, -a <keyword> <path>      Save new shortcut
   to --add <path>                    Save shortcut using directory name
+  to --add-bulk <pattern>           Add shortcuts for each matching directory
   to --rm,  -r <keyword>             Remove existing shortcut
   to --list, -l                      List all shortcuts
   to --print-path, -p <keyword>      Print stored path only
@@ -162,6 +172,7 @@ Usage:
 Options:
   keyword                            Shortcut name
   --add, -a                          Add new shortcut
+  --add-bulk                         Add shortcuts from pattern
   --rm, -r                           Remove shortcut
   --list, -l                         List shortcuts
   --print-path, -p                   Print path only
@@ -175,6 +186,7 @@ Options:
 | Option              | Short | Description                         |
 |---------------------|-------|-------------------------------------|
 | `--add [<k>] <path>`| `-a`  | Add a new shortcut; if `k` is omitted the directory name is used. |
+| `--add-bulk <pattern>` |       | Add shortcuts for each directory matching `pattern`. |
 | `--rm <k>`          | `-r`  | Remove shortcut associated with `k`.|
 | `--list`            | `-l`  | List all saved shortcuts.           |
 | `--print-path <k>`  | `-p`  | Print stored or nested path using prefix matching.              |
