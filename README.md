@@ -17,6 +17,7 @@
 - **Keyword-Based Navigation:** Assign concise keywords to directory paths.
 - **Instant Directory Switching:** Navigate quickly using the `to <keyword>` command.
 - **Iterative Prefix Matching:** Supports nested subdirectory navigation by matching the longest saved keyword prefix and appending the remainder.
+- **Automatic Directory Creation:** Missing nested paths are created on the fly unless `--no-create` is used.
 - **Automatic Editor Launch:** Use `-c`/`--code` to automatically run `code .` after changing directories.
 - **Shell Autocomplete:** Tab-completion for commands and saved keywords.
 - **Simple Shortcut Management:** Easily add (`--add`/`-a`), add in bulk (`--add-bulk`), copy (`--copy`), remove (`--rm`/`-r`), and list (`--list`/`-l`) your shortcuts.
@@ -167,6 +168,7 @@ Usage:
   to --list, -l                      List all shortcuts
   to --print-path, -p <keyword>      Print stored path only
   to --code, -c <keyword>            Open in VSCode after navigation
+  to --no-create <keyword>           Jump without creating missing directories
   to --add <k> <path> --expire <ts>  Save shortcut with expiration
   to --help, -h                      Show this help
 
@@ -180,6 +182,7 @@ Options:
   --print-path, -p                   Print path only
   --expire                           Set expiration epoch time
   --code, -c                         Open in VSCode
+  --no-create                        Disable automatic directory creation
   --help, -h                         Show help
 ```
 
@@ -195,6 +198,7 @@ Options:
 | `--print-path <k>`  | `-p`  | Print stored or nested path using prefix matching.              |
 | `--expire <ts>`     |       | Expire the shortcut after the given epoch timestamp. |
 | `--code`            | `-c`  | Run `code .` in target directory after navigation. |
+| `--no-create`       |       | Do not create nested directories on jump. |
 | `--help`            | `-h`  | Show help message and usage.        |
 
 ## Configuration Details
