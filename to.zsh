@@ -20,13 +20,13 @@ USER_SORT_ORDER="added"
 # Remove expired shortcuts from storage
 function CleanupExpiredShortcuts {
     [ -f "${CONFIG_FILE}" ] || return
-    local now tmpcfg tmpmeta
+    local now tmpcfg tmpmeta storedPath
     now=$(date +%s)
     tmpcfg="${CONFIG_FILE}.tmp"
     tmpmeta="${CONFIG_META_FILE}.tmp"
     : >"${tmpcfg}"
     : >"${tmpmeta}" 2>/dev/null || true
-    while IFS='=' read -r key path || [ -n "$key" ]; do
+    while IFS='=' read -r key storedPath || [ -n "$key" ]; do
         local expiry=""
         if [ -f "${CONFIG_META_FILE}" ]; then
             expiry=$(grep -m1 "^${key}=" "${CONFIG_META_FILE}" | cut -d'=' -f2-)
@@ -34,7 +34,7 @@ function CleanupExpiredShortcuts {
         if [ -n "$expiry" ] && [ "$expiry" -le "$now" ]; then
             continue
         fi
-        printf '%s=%s\n' "$key" "$path" >>"${tmpcfg}"
+        printf '%s=%s\n' "$key" "$storedPath" >>"${tmpcfg}"
         if [ -n "$expiry" ]; then
             printf '%s=%s\n' "$key" "$expiry" >>"${tmpmeta}"
         fi
@@ -63,9 +63,9 @@ function LoadUserConfig {
 function GetSortedKeywords {
     LoadUserConfig
     CleanupExpiredShortcuts
-    local key path
+    local key storedPath
     local -a keys
-    while IFS='=' read -r key path || [ -n "$key" ]; do
+    while IFS='=' read -r key storedPath || [ -n "$key" ]; do
         keys+=("$key")
     done <"${CONFIG_FILE}"
     case "$USER_SORT_ORDER" in
