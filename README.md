@@ -169,7 +169,7 @@ Usage:
   to --print-path, -p <keyword>      Print stored path only
   to --code, -c <keyword>            Open in VSCode after navigation
   to --no-create <keyword>           Jump without creating missing directories
-  to --sort, -s <mode>               Override sorting mode
+  to --sort, -s <mode>               Set sorting mode (added | alpha | recent)
   to --add <k> <path> --expire <ts>  Save shortcut with expiration
   to --help, -h                      Show this help
 
@@ -184,7 +184,7 @@ Options:
   --expire                           Set expiration epoch time
   --code, -c                         Open in VSCode
   --no-create                        Disable automatic directory creation
-  --sort, -s                         Override sorting mode
+  --sort, -s                         Set sorting mode
   --help, -h                         Show help
 ```
 
@@ -219,7 +219,7 @@ Saved shortcuts:
 | `--expire <ts>`     |       | Expire the shortcut after the given epoch timestamp. |
 | `--code`            | `-c`  | Run `code .` in target directory after navigation. |
 | `--no-create`       |       | Do not create nested directories on jump. |
-| `--sort <mode>`     | `-s`  | Override sorting mode (`added`, `alpha`, or `recent`). |
+| `--sort <mode>`     | `-s`  | Set sorting mode (`added`, `alpha`, or `recent`). |
 | `--help`            | `-h`  | Show help message and usage.        |
 
 ## Configuration Details
@@ -232,7 +232,7 @@ Saved shortcuts:
   - `sort_order=added|alpha|recent` controls how shortcuts are listed and suggested.
     The `recent` option uses timestamps stored in `~/.to_dirs_recent` which are
     updated each time a shortcut is used.
-  - The `--sort` flag can override the configured mode for a single run.
+  - Use `--sort <mode>` to change the sorting mode, which is written to `~/.to_zsh_config`.
 
 ## Contributing
 
