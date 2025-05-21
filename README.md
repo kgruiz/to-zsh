@@ -186,6 +186,24 @@ Options:
   --help, -h                         Show help
 ```
 
+Running `to` without arguments displays this help along with a list of
+saved shortcuts formatted in three columns:
+
+```zsh
+❯ to
+to - Persistent Directory Shortcuts
+
+Usage:
+  to <keyword>                       Navigate to saved shortcut
+  …
+  --help, -h                         Show this help
+
+Saved shortcuts:
+  1. proj        4. src         7. utils
+  2. docs        5. images      8. tmp
+  3. conf        6. builds      9. dotfiles
+```
+
 ## Options
 
 | Option              | Short | Description                         |

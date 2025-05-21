@@ -274,30 +274,46 @@ function JumpToShortcut {
 
     if [ -z "${input}" ]; then
         To_ShowHelp
-        # show up to 10 saved keywords
+        # show up to 30 saved keywords in three columns
         if [ -r "${CONFIG_FILE}" ]; then
-            local total shown i
-            total=$(grep -c '^' "${CONFIG_FILE}")
+            local total shown i cols rows maxlen idx key width colsIndex
             local -a sorted
+
             sorted=($(GetSortedKeywords))
-            if [ "${total}" -le 10 ]; then
+            total=${#sorted[@]}
+            shown=$(( total < 30 ? total : 30 ))
+
+            maxlen=0
+            for key in "${sorted[@]:0:${shown}}"; do
+                if [ ${#key} -gt "${maxlen}" ]; then
+                    maxlen=${#key}
+                fi
+            done
+            width=$((maxlen + 2))
+
+            cols=3
+            rows=$(( (shown + cols - 1) / cols ))
+
+            if [ "${total}" -le 30 ]; then
                 printf "\n${MAGENTA}Saved shortcuts:${RESET}\n"
-                i=1
-                for key in "${sorted[@]}"; do
-                    printf "  ${YELLOW}%2d${RESET}. ${BOLD_CYAN}%s${RESET}\n" \
-                        "${i}" "$key"
-                    ((i++))
-                done
             else
-                shown=10
                 printf "\n${MAGENTA}Saved shortcuts (showing %d of %d):${RESET}\n" \
                     "${shown}" "${total}"
-                i=1
-                for key in "${sorted[@]:0:${shown}}"; do
-                    printf "  ${YELLOW}%2d${RESET}. ${BOLD_CYAN}%s${RESET}\n" \
-                        "${i}" "$key"
-                    ((i++))
+            fi
+
+            for ((i=0; i<rows; i++)); do
+                for ((colsIndex=0; colsIndex<cols; colsIndex++)); do
+                    idx=$((colsIndex * rows + i))
+                    if [ ${idx} -lt ${shown} ]; then
+                        key="${sorted[idx]}"
+                        printf "  ${YELLOW}%2d${RESET}. ${BOLD_CYAN}%-${width}s${RESET}" \
+                            "$((idx + 1))" "$key"
+                    fi
                 done
+                printf "\n"
+            done
+
+            if [ "${total}" -gt "${shown}" ]; then
                 printf "  … and %d more\n" "$((total - shown))"
             fi
         fi
