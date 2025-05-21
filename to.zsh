@@ -110,6 +110,7 @@ function To_ShowHelp {
     printf "  ${DIM_WHITE}to --list, -l                     ${RESET} List all shortcuts\n"
     printf "  ${DIM_WHITE}to --print-path, -p <keyword>     ${RESET} Print stored path only\n"
     printf "  ${DIM_WHITE}to --code, -c <keyword>           ${RESET} Open in VSCode after navigation\n"
+    printf "  ${DIM_WHITE}to --no-create                  ${RESET} Do not create nested path on jump\n"
     printf "  ${DIM_WHITE}to --help, -h                     ${RESET} Show this help\n\n"
 
     printf "${MAGENTA}Options:${RESET}\n"
@@ -122,6 +123,7 @@ function To_ShowHelp {
     printf "  ${BOLD_CYAN}--print-path, -p               ${RESET}    Print path only\n"
     printf "  ${BOLD_CYAN}--expire <ts>                  ${RESET}    Set expiration epoch for shortcut\n"
     printf "  ${BOLD_CYAN}--code, -c                     ${RESET}    Open in VSCode\n"
+    printf "  ${BOLD_CYAN}--no-create                    ${RESET}    Disable path creation on jump\n"
     printf "  ${BOLD_CYAN}--help, -h                     ${RESET}    Show help\n"
 }
 
@@ -268,6 +270,7 @@ function RemoveShortcut {
 # Jump to a saved directory
 function JumpToShortcut {
     local input="$1"
+    local create="${2:-1}"
 
     if [ -z "${input}" ]; then
         To_ShowHelp
@@ -346,6 +349,13 @@ function JumpToShortcut {
                 }
                 UpdateRecentUsage "${prefix}"
                 return
+            elif [ "$create" -eq 1 ]; then
+                mkdir -p "${targetPath}" && cd "${targetPath}" && {
+                    printf "${GREEN}Created and changed directory to ${DIM_WHITE}%s${RESET}\n" "${targetPath}"
+                    if [ "$runCode" -eq 1 ]; then code .; fi
+                }
+                UpdateRecentUsage "${prefix}"
+                return
             fi
         fi
     done
@@ -368,6 +378,7 @@ function to {
 
     local runCode=0
     local printPath=0
+    local createFlag=1
     local action=""
     local addKeyword=""
     local targetPath=""
@@ -425,6 +436,10 @@ function to {
             --expire)
                 expireTime="$2"
                 shift 2
+                ;;
+            --no-create)
+                createFlag=0
+                shift
                 ;;
             --rm|-r)
                 action="remove"
@@ -503,7 +518,7 @@ function to {
             ;;
         *)
             # default to jump, passing first positional as input
-            JumpToShortcut "${positional[1]}"
+            JumpToShortcut "${positional[1]}" "$createFlag"
             ;;
     esac
 }
@@ -524,6 +539,7 @@ if [[ -n $ZSH_VERSION ]]; then
             '--add-bulk[add shortcuts from pattern]:pattern:' \
             '--copy[copy existing shortcut]:existing keyword:->keywords :new:' \
             '--expire[expiration timestamp]:timestamp:' \
+            '--no-create[do not create missing directories]' \
             '(-r --rm)'{-r,--rm}'[remove shortcut]:keyword:->keywords' \
             '*:keyword:->keywords' && return
 
