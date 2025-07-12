@@ -18,7 +18,7 @@
 - **Instant Directory Switching:** Navigate quickly using the `to <keyword>` command.
 - **Iterative Prefix Matching:** Supports nested subdirectory navigation by matching the longest saved keyword prefix and appending the remainder.
 - **Automatic Directory Creation:** Missing nested paths are created on the fly unless `--no-create` is used.
-- **Automatic Editor Launch:** Use `-c`/`--code` to automatically run `code .` after changing directories.
+- **Automatic Editor Launch:** Use `-c`/`--cursor` to automatically run `cursor .` after changing directories.
 - **Shell Autocomplete:** Tab-completion for commands and saved keywords.
 - **Simple Shortcut Management:** Easily add (`--add`/`-a`), add in bulk (`--add-bulk`), copy (`--copy`), remove (`--rm`/`-r`), and list (`--list`/`-l`) your shortcuts.
 - **Relative Path Support:** Accepts relative or absolute directory paths, resolving relative paths to their absolute form automatically.
@@ -112,13 +112,13 @@ proj/src=/Development/my-project/src
 Changed directory to /Development/my-project/src/utils
 ```
 
-**Running Code Editor**
-Append `-c` or `--code` to open VSCode in the target directory:
+**Running Cursor IDE**
+Append `-c` or `--cursor` to open Cursor in the target directory:
 
 ```zsh
 ❯ to -c proj/docs
 Changed directory to ~/Development/my-project/docs
-# VSCode opens in that directory
+# Cursor opens in that directory
 ```
 
 **3. Listing Saved Shortcuts**
@@ -167,7 +167,7 @@ Usage:
   to --rm,  -r <keyword>             Remove existing shortcut
   to --list, -l                      List all shortcuts
   to --print-path, -p <keyword>      Print stored path only
-  to --code, -c <keyword>            Open in VSCode after navigation
+  to --cursor, -c <keyword>            Open in Cursor after navigation
   to --no-create <keyword>           Jump without creating missing directories
   to --sort, -s <mode>               Set sorting mode (added | alpha | recent)
   to --add <k> <path> --expire <ts>  Save shortcut with expiration
@@ -182,7 +182,7 @@ Options:
   --list, -l                         List shortcuts
   --print-path, -p                   Print path only
   --expire                           Set expiration epoch time
-  --code, -c                         Open in VSCode
+  --cursor, -c                         Open in Cursor
   --no-create                        Disable automatic directory creation
   --sort, -s                         Set sorting mode
   --help, -h                         Show help
@@ -217,7 +217,7 @@ Saved shortcuts:
 | `--list`            | `-l`  | List all saved shortcuts.           |
 | `--print-path <k>`  | `-p`  | Print stored or nested path using prefix matching.              |
 | `--expire <ts>`     |       | Expire the shortcut after the given epoch timestamp. |
-| `--code`            | `-c`  | Run `code .` in target directory after navigation. |
+| `--cursor`            | `-c`  | Run `cursor .` in target directory after navigation. |
 | `--no-create`       |       | Do not create nested directories on jump. |
 | `--sort <mode>`     | `-s`  | Set sorting mode (`added`, `alpha`, or `recent`). |
 | `--help`            | `-h`  | Show help message and usage.        |

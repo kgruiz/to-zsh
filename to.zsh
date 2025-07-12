@@ -128,7 +128,7 @@ function To_ShowHelp {
     printf "  ${DIM_WHITE}%-55s${RESET}%s\n" "to --rm, -r <keyword>" "Remove existing shortcut"
     printf "  ${DIM_WHITE}%-55s${RESET}%s\n" "to --list, -l" "List all shortcuts"
     printf "  ${DIM_WHITE}%-55s${RESET}%s\n" "to --print-path, -p <keyword>" "Print stored path only"
-    printf "  ${DIM_WHITE}%-55s${RESET}%s\n" "to --code, -c <keyword>" "Open in VSCode after navigation"
+    printf "  ${DIM_WHITE}%-55s${RESET}%s\n" "to --cursor, -c <keyword>" "Open in Cursor after navigation"
     printf "  ${DIM_WHITE}%-55s${RESET}%s\n" "to --no-create" "Do not create nested path on jump"
     printf "  ${DIM_WHITE}%-55s${RESET}%s\n" "to --sort, -s <mode>" "Set sorting mode (added | alpha | recent)"
     printf "  ${DIM_WHITE}%-55s${RESET}%s\n\n" "to --help, -h" "Show this help"
@@ -142,7 +142,7 @@ function To_ShowHelp {
     printf "  ${BOLD_CYAN}%-30s${RESET}%s\n" "--list, -l" "List shortcuts"
     printf "  ${BOLD_CYAN}%-30s${RESET}%s\n" "--print-path, -p" "Print path only"
     printf "  ${BOLD_CYAN}%-30s${RESET}%s\n" "--expire <ts>" "Set expiration epoch for shortcut"
-    printf "  ${BOLD_CYAN}%-30s${RESET}%s\n" "--code, -c" "Open in VSCode"
+    printf "  ${BOLD_CYAN}%-30s${RESET}%s\n" "--cursor, -c" "Open in Cursor"
     printf "  ${BOLD_CYAN}%-30s${RESET}%s\n" "--no-create" "Disable path creation on jump"
     printf "  ${BOLD_CYAN}%-30s${RESET}%s\n" "--sort, -s" "Set sorting mode"
     printf "  ${BOLD_CYAN}%-30s${RESET}%s\n" "--help, -h" "Show help"
@@ -353,7 +353,7 @@ function JumpToShortcut {
         basePath=$(grep "^${input}=" "${CONFIG_FILE}" | cut -d'=' -f2-)
         cd "${basePath}" && {
             printf "${GREEN}Changed directory to ${DIM_WHITE}%s${RESET}\n" "${basePath}"
-            if [ "$runCode" -eq 1 ]; then code .; fi
+            if [ "$runCursor" -eq 1 ]; then cursor .; fi
         }
         UpdateRecentUsage "${input}"
         return
@@ -387,14 +387,14 @@ function JumpToShortcut {
             if [ -d "${targetPath}" ]; then
                 cd "${targetPath}" && {
                     printf "${GREEN}Changed directory to ${DIM_WHITE}%s${RESET}\n" "${targetPath}"
-                    if [ "$runCode" -eq 1 ]; then code .; fi
+                    if [ "$runCursor" -eq 1 ]; then cursor .; fi
                 }
                 UpdateRecentUsage "${prefix}"
                 return
             elif [ "$create" -eq 1 ]; then
                 if mkdir -p "${targetPath}" && cd "${targetPath}"; then
                     printf "${GREEN}Created and changed directory to ${DIM_WHITE}%s${RESET}\n" "${targetPath}"
-                    if [ "$runCode" -eq 1 ]; then code .; fi
+                    if [ "$runCursor" -eq 1 ]; then cursor .; fi
                     UpdateRecentUsage "${prefix}"
                     return
                 else
@@ -425,7 +425,7 @@ function to {
     fi
     CleanupExpiredShortcuts
 
-    local runCode=0
+    local runCursor=0
     local printPath=0
     local createFlag=1
     local action=""
@@ -442,8 +442,8 @@ function to {
     # parse flags in any position
     while [[ $# -gt 0 ]]; do
         case $1 in
-            -c|--code)
-                runCode=1
+            -c|--cursor)
+                runCursor=1
                 shift
                 ;;
             -p|--print-path)
@@ -591,7 +591,7 @@ if [[ -n $ZSH_VERSION ]]; then
         _arguments -s -C \
             '(-h --help)'{-h,--help}'[show help]' \
             '(-l --list)'{-l,--list}'[list shortcuts]' \
-            '(-c --code)'{-c,--code}'[open in VSCode]' \
+            '(-c --cursor)'{-c,--cursor}'[open in Cursor]' \
             '(-p --print-path)'{-p,--print-path}'[print stored path]:keyword:->keywords' \
             '(-a --add)'{-a,--add}'[add shortcut]:keyword:->keywords :path:_files -/' \
             '--add-bulk[add shortcuts from pattern]:pattern:' \
