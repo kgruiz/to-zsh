@@ -4,15 +4,15 @@
 function to {
 
     # color codes (only define if not already set)
-    local readonly ESC="\033"
-    local readonly RESET="${ESC}[0m"
-    local readonly BOLD_CYAN="${ESC}[1;36m"
-    local readonly DIM_WHITE="${ESC}[2;37m"
-    local readonly DIM_BLUE="${ESC}[2;34m"
-    local readonly GREEN="${ESC}[0;32m"
-    local readonly BOLD_RED="${ESC}[1;31m"
-    local readonly YELLOW="${ESC}[0;33m"
-    local readonly MAGENTA="${ESC}[0;35m"
+    local ESC="\033"
+    local RESET="${ESC}[0m"
+    local BOLD_CYAN="${ESC}[1;36m"
+    local DIM_WHITE="${ESC}[2;37m"
+    local DIM_BLUE="${ESC}[2;34m"
+    local GREEN="${ESC}[0;32m"
+    local BOLD_RED="${ESC}[1;31m"
+    local YELLOW="${ESC}[0;33m"
+    local MAGENTA="${ESC}[0;35m"
 
     local CONFIG_FILE="${HOME}/.to_dirs"
     local CONFIG_META_FILE="${HOME}/.to_dirs_meta"
