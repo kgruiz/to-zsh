@@ -512,13 +512,17 @@ function to {
     done
 
     if [ -n "$newSortMode" ]; then
-        SetSortOrder "$newSortMode" || return
+        SetSortOrder "$newSortMode" || {
+            unset -f CleanupExpiredShortcuts GetSortedKeywords ListShortcuts AddShortcut AddBulkShortcuts CopyShortcut RemoveShortcut JumpToShortcut
+            return 1
+        }
     fi
 
     if [[ $printPath -eq 1 ]]; then
         # handle print-path action
         if [ -z "${positional[1]}" ]; then
             printf "${BOLD_RED}Usage: to -p <keyword>[/subdir]${RESET}\n" >&2
+            unset -f CleanupExpiredShortcuts GetSortedKeywords ListShortcuts AddShortcut AddBulkShortcuts CopyShortcut RemoveShortcut JumpToShortcut
             return 1
         fi
         # reuse existing logic from --print-path section
@@ -527,6 +531,7 @@ function to {
         local pathLine
         if pathLine=$(grep -m1 "^${input}=" "${CONFIG_FILE}" 2>/dev/null); then
             printf "%s\n" "${pathLine#*=}"
+            unset -f CleanupExpiredShortcuts GetSortedKeywords ListShortcuts AddShortcut AddBulkShortcuts CopyShortcut RemoveShortcut JumpToShortcut
             return
         fi
         # prefix-match logic
@@ -551,10 +556,12 @@ function to {
                     target+="/${remainder}"
                 fi
                 printf "%s\n" "${target}"
+                unset -f CleanupExpiredShortcuts GetSortedKeywords ListShortcuts AddShortcut AddBulkShortcuts CopyShortcut RemoveShortcut JumpToShortcut
                 return
             fi
         done
         printf "${BOLD_RED}Error: Shortcut or path '%s' not found.${RESET}\n" "${input}" >&2
+        unset -f CleanupExpiredShortcuts GetSortedKeywords ListShortcuts AddShortcut AddBulkShortcuts CopyShortcut RemoveShortcut JumpToShortcut
         return 1
     fi
 
