@@ -1,5 +1,7 @@
 # to-zsh
 
+> Prefer the Rust-based successor here: [goto](https://github.com/kgruiz/goto).
+
 `to-zsh` provides persistent, keyword-based directory shortcuts with iterative prefix matching for Zsh, enabling instant navigation to saved or nested subdirectories without typing full paths. Assign memorable keywords to frequently accessed directories and traverse deeper paths seamlessly.
 
 ## Table of Contents
