@@ -46,22 +46,32 @@ if [ -d "$installDir" ] && [ -z "$(ls -A "$installDir")" ]; then
   rmdir "$installDir"
 fi
 
-for cfg in "${configFiles[@]}"; do
+printf 'Remove to-zsh data files (%s)? [y/N]: ' "$(printf '%s, ' "${configFiles[@]}" | sed 's/, $//')"
+read -r answer
 
-  if [ -f "$cfg" ]; then
+if printf '%s\n' "$answer" | grep -Eq '^[Yy]'; then
 
-    rm -f "$cfg"
+  for cfg in "${configFiles[@]}"; do
+
+    if [ -f "$cfg" ]; then
+
+      rm -f "$cfg"
+    fi
+  done
+
+  if [ -d "$pluginsDir" ] && [ -z "$(ls -A "$pluginsDir")" ]; then
+
+    rmdir "$pluginsDir"
   fi
-done
 
-if [ -d "$pluginsDir" ] && [ -z "$(ls -A "$pluginsDir")" ]; then
+  if [ -d "$configDir" ] && [ -z "$(ls -A "$configDir")" ]; then
 
-  rmdir "$pluginsDir"
+    rmdir "$configDir"
+  fi
+
+  printf 'Removed to-zsh init block from %s, deleted configs, and cleaned %s\n' "$zshrc" "$targetScript"
+
+else
+
+  printf 'Removed to-zsh init block from %s and cleaned %s (data files retained)\n' "$zshrc" "$targetScript"
 fi
-
-if [ -d "$configDir" ] && [ -z "$(ls -A "$configDir")" ]; then
-
-  rmdir "$configDir"
-fi
-
-printf 'Removed to-zsh init block from %s, deleted configs, and cleaned %s\n' "$zshrc" "$targetScript"
