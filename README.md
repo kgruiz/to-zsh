@@ -30,7 +30,7 @@
 
 ## Installation
 
-**Quick Install Script**
+### Quick Install Script
 
 From the repository root run:
 
@@ -40,7 +40,7 @@ zsh install
 
 The script copies `to.zsh` to `~/.config/zsh/plugins/to-zsh/` and inserts the recommended init block into `~/.zshrc` (updating it if already present). Reload your shell with `source ~/.zshrc` after running it.
 
-**Uninstall Script**
+### Uninstall Script
 
 To remove the init block and the installed copy of `to.zsh`, run:
 
