@@ -30,6 +30,16 @@
 
 ## Installation
 
+**Quick Install Script**
+
+From the repository root run:
+
+```zsh
+zsh install.sh
+```
+
+The script copies `to.zsh` to `~/.config/zsh/plugins/to-zsh/` and inserts the recommended init block into `~/.zshrc` (updating it if already present). Reload your shell with `source ~/.zshrc` after running it.
+
 1. **Clone the Repository (or Download `to.zsh`)**
     Choose a location for the script (e.g., `~/.config/zsh/plugins/to-zsh`).
 

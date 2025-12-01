@@ -1,0 +1,58 @@
+set -euo pipefail
+
+scriptDir="$(cd -- "$(dirname "$0")" && pwd)"
+installDir="${HOME}/.config/zsh/plugins/to-zsh"
+targetScript="${installDir}/to.zsh"
+zshrc="${HOME}/.zshrc"
+startMarker="# >>> to-zsh init >>>"
+endMarker="# <<< to-zsh init <<<"
+
+mkdir -p "$installDir"
+
+cp "${scriptDir}/to.zsh" "$targetScript"
+
+if [ ! -f "$zshrc" ]; then
+
+  touch "$zshrc"
+fi
+
+read -r -d '' snippet <<EOF
+# >>> to-zsh init >>>
+autoload -Uz compinit
+compinit
+
+TO_FUNC_PATH="$HOME/.config/zsh/plugins/to-zsh/to.zsh"
+
+if [ -f "$TO_FUNC_PATH" ]; then
+
+  if ! . "$TO_FUNC_PATH" 2>&1; then
+    echo "Error: Failed to source \"$(basename "$TO_FUNC_PATH")\"" >&2
+  fi
+
+else
+
+  echo "Error: \"$(basename "$TO_FUNC_PATH")\" not found at:" >&2
+  echo "  $TO_FUNC_PATH" >&2
+fi
+
+unset TO_FUNC_PATH
+# <<< to-zsh init <<<
+EOF
+
+escapedSnippet="$(printf '%s\n' "$snippet" | sed -e 's/[\\/&]/\\&/g')"
+tempFile="$(mktemp)"
+
+if grep -q "$startMarker" "$zshrc"; then
+
+  perl -0777 -pe "s|$startMarker.*?$endMarker|$escapedSnippet|s" "$zshrc" > "$tempFile"
+
+else
+
+  cat "$zshrc" > "$tempFile"
+
+  printf '\n%s\n' "$snippet" >> "$tempFile"
+fi
+
+mv "$tempFile" "$zshrc"
+
+printf 'Installed to-zsh script to %s and ensured init block in %s\n' "$targetScript" "$zshrc"
