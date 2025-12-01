@@ -106,7 +106,17 @@ function GetSortedKeywords {
 
     case "$sort_order" in
         alpha)
-            keys=($(printf '%s\n' "${keys[@]}" | sort))
+            local -a sort_cmd
+
+            if sort -V </dev/null 2>/dev/null; then
+                sort_cmd=(sort -V)
+            elif command -v gsort >/dev/null 2>&1 && gsort -V </dev/null 2>/dev/null; then
+                sort_cmd=(gsort -V)
+            else
+                sort_cmd=(sort)
+            fi
+
+            keys=($(printf '%s\n' "${keys[@]}" | "${sort_cmd[@]}"))
             ;;
         recent)
             if [ -f "${recent_file}" ]; then
