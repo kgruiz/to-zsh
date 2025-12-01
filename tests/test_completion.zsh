@@ -4,6 +4,10 @@ set -e
 # temporary HOME for isolation
 TMPDIR=$(mktemp -d)
 export HOME="$TMPDIR"
+export TO_CONFIG_FILE="$HOME/.to_dirs"
+export TO_CONFIG_META_FILE="$HOME/.to_dirs_meta"
+export TO_USER_CONFIG_FILE="$HOME/.to_zsh_config"
+export TO_RECENT_FILE="$HOME/.to_dirs_recent"
 
 # stub compdef to avoid requiring compinit
 function compdef { :; }
@@ -38,6 +42,22 @@ if ! whence -f _to | grep -q '_path_files'; then
 fi
 if ! whence -f _to | grep -q 'GetSortedKeywords'; then
     echo "completion missing GetSortedKeywords" >&2
+    exit 1
+fi
+
+if ! whence -w GetSortedKeywords >/dev/null; then
+    echo "GetSortedKeywords not defined globally" >&2
+    exit 1
+fi
+
+keywords=($(GetSortedKeywords))
+if [[ ${#keywords[@]} -ne 2 ]]; then
+    echo "GetSortedKeywords returned unexpected count: ${#keywords[@]}" >&2
+    exit 1
+fi
+
+if [[ ${keywords[1]} != foo || ${keywords[2]} != bar ]]; then
+    echo "GetSortedKeywords returned unexpected order: ${keywords[*]}" >&2
     exit 1
 fi
 

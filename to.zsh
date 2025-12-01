@@ -1,5 +1,126 @@
 # Persistent Directory Shortcuts – `to` command
 
+: "${TO_CONFIG_FILE:=${HOME}/.to_dirs}"
+: "${TO_CONFIG_META_FILE:=${HOME}/.to_dirs_meta}"
+: "${TO_USER_CONFIG_FILE:=${HOME}/.to_zsh_config}"
+: "${TO_RECENT_FILE:=${HOME}/.to_dirs_recent}"
+
+function CleanupExpiredShortcuts {
+
+    local config_file
+    local config_meta_file
+
+    config_file="${1:-${TO_CONFIG_FILE}}"
+    config_meta_file="${2:-${TO_CONFIG_META_FILE}}"
+
+    if [ ! -f "${config_file}" ]; then
+        return
+    fi
+
+    local now
+    local tmpcfg
+    local tmpmeta
+    local storedPath
+
+    now=$(date +%s)
+    tmpcfg="${config_file}.tmp"
+    tmpmeta="${config_meta_file}.tmp"
+
+    : >"${tmpcfg}"
+    : >"${tmpmeta}" 2>/dev/null || true
+
+    while IFS='=' read -r key storedPath || [ -n "$key" ]; do
+
+        local expiry=""
+
+        if [ -f "${config_meta_file}" ]; then
+            expiry=$(grep -m1 "^${key}=" "${config_meta_file}" | cut -d'=' -f2-)
+        fi
+
+        if [ -n "$expiry" ] && [ "$expiry" -le "$now" ]; then
+            continue
+        fi
+
+        printf '%s=%s\n' "$key" "$storedPath" >>"${tmpcfg}"
+
+        if [ -n "$expiry" ]; then
+            printf '%s=%s\n' "$key" "$expiry" >>"${tmpmeta}"
+        fi
+
+    done <"${config_file}"
+
+    mv "${tmpcfg}" "${config_file}"
+
+    if [ -f "${tmpmeta}" ]; then
+        mv "${tmpmeta}" "${config_meta_file}"
+    fi
+}
+
+function LoadUserConfig {
+
+    local user_config_file
+    local sort_order="added"
+
+    user_config_file="${1:-${TO_USER_CONFIG_FILE}}"
+
+    if [ -f "${user_config_file}" ]; then
+        while IFS='=' read -r key val || [ -n "$key" ]; do
+
+            if [ "$key" = "sort_order" ]; then
+                sort_order="$val"
+            fi
+
+        done <"${user_config_file}"
+    fi
+
+    printf '%s\n' "$sort_order"
+}
+
+function GetSortedKeywords {
+
+    local config_file
+    local config_meta_file
+    local user_config_file
+    local recent_file
+    local sort_order
+
+    config_file="${1:-${TO_CONFIG_FILE}}"
+    config_meta_file="${2:-${TO_CONFIG_META_FILE}}"
+    user_config_file="${3:-${TO_USER_CONFIG_FILE}}"
+    recent_file="${4:-${TO_RECENT_FILE}}"
+    sort_order=$(LoadUserConfig "${user_config_file}")
+
+    CleanupExpiredShortcuts "${config_file}" "${config_meta_file}"
+
+    if [ ! -f "${config_file}" ]; then
+        return
+    fi
+
+    local key
+    local storedPath
+    local -a keys
+
+    while IFS='=' read -r key storedPath || [ -n "$key" ]; do
+        keys+=("$key")
+    done <"${config_file}"
+
+    case "$sort_order" in
+        alpha)
+            keys=($(printf '%s\n' "${keys[@]}" | sort))
+            ;;
+        recent)
+            if [ -f "${recent_file}" ]; then
+                keys=($(for k in "${keys[@]}"; do
+                            ts=$(grep -m1 "^${k}=" "${recent_file}" | cut -d'=' -f2)
+                            echo "${ts:-0} ${k}"
+                        done | sort -k1,1nr | awk '{print $2}'))
+            fi
+            ;;
+    esac
+
+    printf '%s\n' "${keys[@]}"
+}
+
 # Main entrypoint
 function to {
 
@@ -18,51 +139,9 @@ function to {
     local CONFIG_META_FILE="${HOME}/.to_dirs_meta"
     local USER_CONFIG_FILE="${HOME}/.to_zsh_config"
     local RECENT_FILE="${HOME}/.to_dirs_recent"
-    local USER_SORT_ORDER="added"
 
     # Helpers
     # ---------
-    # Remove expired shortcuts from storage
-    function CleanupExpiredShortcuts {
-        [ -f "${CONFIG_FILE}" ] || return
-        local now tmpcfg tmpmeta storedPath
-        now=$(date +%s)
-        tmpcfg="${CONFIG_FILE}.tmp"
-        tmpmeta="${CONFIG_META_FILE}.tmp"
-        : >"${tmpcfg}"
-        : >"${tmpmeta}" 2>/dev/null || true
-        while IFS='=' read -r key storedPath || [ -n "$key" ]; do
-            local expiry=""
-            if [ -f "${CONFIG_META_FILE}" ]; then
-                expiry=$(grep -m1 "^${key}=" "${CONFIG_META_FILE}" | cut -d'=' -f2-)
-            fi
-            if [ -n "$expiry" ] && [ "$expiry" -le "$now" ]; then
-                continue
-            fi
-            printf '%s=%s\n' "$key" "$storedPath" >>"${tmpcfg}"
-            if [ -n "$expiry" ]; then
-                printf '%s=%s\n' "$key" "$expiry" >>"${tmpmeta}"
-            fi
-        done <"${CONFIG_FILE}"
-        mv "${tmpcfg}" "${CONFIG_FILE}"
-        if [ -f "${tmpmeta}" ]; then
-            mv "${tmpmeta}" "${CONFIG_META_FILE}"
-        fi
-    }
-
-    # Load user preferences
-    function LoadUserConfig {
-        USER_SORT_ORDER="added"
-        if [ -f "${USER_CONFIG_FILE}" ]; then
-            while IFS='=' read -r key val || [ -n "$key" ]; do
-                case "$key" in
-                    sort_order)
-                        USER_SORT_ORDER="$val"
-                        ;;
-                esac
-            done <"${USER_CONFIG_FILE}"
-        fi
-    }
 
     # Persist new sorting mode to the user config
     function SetSortOrder {
@@ -76,36 +155,10 @@ function to {
                 ;;
         esac
 
-        USER_SORT_ORDER="$mode"
         local tmp="${USER_CONFIG_FILE}.tmp"
         [ -f "${USER_CONFIG_FILE}" ] && grep -v '^sort_order=' "${USER_CONFIG_FILE}" >"${tmp}" || : >"${tmp}"
         printf 'sort_order=%s\n' "$mode" >>"${tmp}"
         mv "${tmp}" "${USER_CONFIG_FILE}"
-    }
-
-    # Return saved keywords sorted per user preference
-    function GetSortedKeywords {
-        LoadUserConfig
-        CleanupExpiredShortcuts
-        local key storedPath
-        local -a keys
-        while IFS='=' read -r key storedPath || [ -n "$key" ]; do
-            keys+=("$key")
-        done <"${CONFIG_FILE}"
-        case "$USER_SORT_ORDER" in
-            alpha)
-                keys=($(printf '%s\n' "${keys[@]}" | sort))
-                ;;
-            recent)
-                if [ -f "${RECENT_FILE}" ]; then
-                    keys=($(for k in "${keys[@]}"; do
-                                ts=$(grep -m1 "^${k}=" "${RECENT_FILE}" | cut -d'=' -f2)
-                                echo "${ts:-0} ${k}"
-                            done | sort -k1,1nr | awk '{print $2}'))
-                fi
-                ;;
-        esac
-        printf '%s\n' "${keys[@]}"
     }
 
     # Update timestamp for most recently used keywords
@@ -153,8 +206,9 @@ function to {
         printf "  ${BOLD_CYAN}%-30s${RESET}%s\n" "--help, -h" "Show help"
 
         DisplaySavedShortcuts
-        LoadUserConfig
-        printf "\nCurrent sorting mode: %s (from %s)\n" "$USER_SORT_ORDER" "$USER_CONFIG_FILE"
+        local currentSort
+        currentSort=$(LoadUserConfig "${USER_CONFIG_FILE}")
+        printf "\nCurrent sorting mode: %s (from %s)\n" "$currentSort" "$USER_CONFIG_FILE"
     }
 
     # List all saved shortcuts
@@ -168,7 +222,7 @@ function to {
         while IFS= read -r keyword; do
             targetPath=$(grep -m1 "^${keyword}=" "${CONFIG_FILE}" | cut -d'=' -f2-)
             printf "${BOLD_CYAN}%s${RESET} → ${DIM_WHITE}%s${RESET}\n" "$keyword" "$targetPath"
-        done < <(GetSortedKeywords)
+        done < <(GetSortedKeywords "${CONFIG_FILE}" "${CONFIG_META_FILE}" "${USER_CONFIG_FILE}" "${RECENT_FILE}")
     }
 
     # Display saved shortcuts in a 3-column layout
@@ -178,7 +232,7 @@ function to {
         local total shown cols rows maxlen idx key width i colsIndex
         local -a sorted
 
-        sorted=($(GetSortedKeywords))
+        sorted=($(GetSortedKeywords "${CONFIG_FILE}" "${CONFIG_META_FILE}" "${USER_CONFIG_FILE}" "${RECENT_FILE}"))
         total=${#sorted[@]}
         shown=$(( total < 30 ? total : 30 ))
 
@@ -426,7 +480,7 @@ function to {
     if [ ! -f "${RECENT_FILE}" ]; then
         : >"${RECENT_FILE}"
     fi
-    CleanupExpiredShortcuts
+    CleanupExpiredShortcuts "${CONFIG_FILE}" "${CONFIG_META_FILE}"
 
     local runCursor=0
     local printPath=0
@@ -513,7 +567,7 @@ function to {
 
     if [ -n "$newSortMode" ]; then
         SetSortOrder "$newSortMode" || {
-            unset -f CleanupExpiredShortcuts GetSortedKeywords ListShortcuts AddShortcut AddBulkShortcuts CopyShortcut RemoveShortcut JumpToShortcut
+            unset -f ListShortcuts AddShortcut AddBulkShortcuts CopyShortcut RemoveShortcut JumpToShortcut
             return 1
         }
     fi
@@ -522,7 +576,7 @@ function to {
         # handle print-path action
         if [ -z "${positional[1]}" ]; then
             printf "${BOLD_RED}Usage: to -p <keyword>[/subdir]${RESET}\n" >&2
-            unset -f CleanupExpiredShortcuts GetSortedKeywords ListShortcuts AddShortcut AddBulkShortcuts CopyShortcut RemoveShortcut JumpToShortcut
+            unset -f ListShortcuts AddShortcut AddBulkShortcuts CopyShortcut RemoveShortcut JumpToShortcut
             return 1
         fi
         # reuse existing logic from --print-path section
@@ -531,7 +585,7 @@ function to {
         local pathLine
         if pathLine=$(grep -m1 "^${input}=" "${CONFIG_FILE}" 2>/dev/null); then
             printf "%s\n" "${pathLine#*=}"
-            unset -f CleanupExpiredShortcuts GetSortedKeywords ListShortcuts AddShortcut AddBulkShortcuts CopyShortcut RemoveShortcut JumpToShortcut
+            unset -f ListShortcuts AddShortcut AddBulkShortcuts CopyShortcut RemoveShortcut JumpToShortcut
             return
         fi
         # prefix-match logic
@@ -556,12 +610,12 @@ function to {
                     target+="/${remainder}"
                 fi
                 printf "%s\n" "${target}"
-                unset -f CleanupExpiredShortcuts GetSortedKeywords ListShortcuts AddShortcut AddBulkShortcuts CopyShortcut RemoveShortcut JumpToShortcut
+                unset -f ListShortcuts AddShortcut AddBulkShortcuts CopyShortcut RemoveShortcut JumpToShortcut
                 return
             fi
         done
         printf "${BOLD_RED}Error: Shortcut or path '%s' not found.${RESET}\n" "${input}" >&2
-        unset -f CleanupExpiredShortcuts GetSortedKeywords ListShortcuts AddShortcut AddBulkShortcuts CopyShortcut RemoveShortcut JumpToShortcut
+        unset -f ListShortcuts AddShortcut AddBulkShortcuts CopyShortcut RemoveShortcut JumpToShortcut
         return 1
     fi
 
@@ -591,7 +645,7 @@ function to {
     esac
 
     # cleanup helpers
-    unset -f CleanupExpiredShortcuts GetSortedKeywords ListShortcuts AddShortcut AddBulkShortcuts CopyShortcut RemoveShortcut JumpToShortcut
+    unset -f ListShortcuts AddShortcut AddBulkShortcuts CopyShortcut RemoveShortcut JumpToShortcut
 }
 
 # Zsh completion for `to`
@@ -615,6 +669,9 @@ if [[ -n $ZSH_VERSION ]]; then
             '(-r --rm)'{-r,--rm}'[remove shortcut]:keyword:->keywords' \
             '*:keyword:->keywords' && return
 
+        local completionConfigFile
+        completionConfigFile="${TO_CONFIG_FILE:-${HOME}/.to_dirs}"
+
         case $state in
         keywords)
             local cur=${words[CURRENT]}
@@ -622,7 +679,7 @@ if [[ -n $ZSH_VERSION ]]; then
                 local key=${cur%%/*}
                 local rest=${cur#*/}
                 local base
-                base=$(grep -m1 "^${key}=" "${CONFIG_FILE}" 2>/dev/null | cut -d'=' -f2-)
+                base=$(grep -m1 "^${key}=" "${completionConfigFile}" 2>/dev/null | cut -d'=' -f2-)
                 if [[ -n $base ]]; then
                     _path_files -W "$base" -/ "$rest"
                     return
