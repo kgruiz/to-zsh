@@ -5,6 +5,14 @@ installDir="${HOME}/.config/zsh/plugins/to-zsh"
 targetScript="${installDir}/to.zsh"
 startMarker="# >>> to-zsh init >>>"
 endMarker="# <<< to-zsh init <<<"
+configFiles=(
+  "${HOME}/.to_dirs"
+  "${HOME}/.to_dirs_meta"
+  "${HOME}/.to_zsh_config"
+  "${HOME}/.to_dirs_recent"
+)
+pluginsDir="${HOME}/.config/zsh/plugins"
+configDir="${HOME}/.config/zsh"
 
 if [ ! -f "$zshrc" ]; then
 
@@ -38,4 +46,22 @@ if [ -d "$installDir" ] && [ -z "$(ls -A "$installDir")" ]; then
   rmdir "$installDir"
 fi
 
-printf 'Removed to-zsh init block from %s and cleaned %s\n' "$zshrc" "$targetScript"
+for cfg in "${configFiles[@]}"; do
+
+  if [ -f "$cfg" ]; then
+
+    rm -f "$cfg"
+  fi
+done
+
+if [ -d "$pluginsDir" ] && [ -z "$(ls -A "$pluginsDir")" ]; then
+
+  rmdir "$pluginsDir"
+fi
+
+if [ -d "$configDir" ] && [ -z "$(ls -A "$configDir")" ]; then
+
+  rmdir "$configDir"
+fi
+
+printf 'Removed to-zsh init block from %s, deleted configs, and cleaned %s\n' "$zshrc" "$targetScript"

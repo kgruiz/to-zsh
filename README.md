@@ -48,7 +48,7 @@ To remove the init block and the installed copy of `to.zsh`, run:
 zsh uninstall
 ```
 
-The script only removes the block if the exact start/end markers are found; otherwise it exits with a message and makes no changes.
+The script only removes the block if the exact start/end markers are found; otherwise it exits with a message and makes no changes. It also deletes the installed script copy and cleans up the related config files (`~/.to_dirs`, `~/.to_dirs_meta`, `~/.to_zsh_config`, `~/.to_dirs_recent`).
 
 1. **Clone the Repository (or Download `to.zsh`)**
     Choose a location for the script (e.g., `~/.config/zsh/plugins/to-zsh`).
