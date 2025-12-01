@@ -40,6 +40,16 @@ zsh install
 
 The script copies `to.zsh` to `~/.config/zsh/plugins/to-zsh/` and inserts the recommended init block into `~/.zshrc` (updating it if already present). Reload your shell with `source ~/.zshrc` after running it.
 
+**Uninstall Script**
+
+To remove the init block and the installed copy of `to.zsh`, run:
+
+```zsh
+zsh uninstall
+```
+
+The script only removes the block if the exact start/end markers are found; otherwise it exits with a message and makes no changes.
+
 1. **Clone the Repository (or Download `to.zsh`)**
     Choose a location for the script (e.g., `~/.config/zsh/plugins/to-zsh`).
 
