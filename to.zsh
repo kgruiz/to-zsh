@@ -59,7 +59,7 @@ function CleanupExpiredShortcuts {
 function LoadUserConfig {
 
     local user_config_file
-    local sort_order="added"
+    local sort_order="alpha"
 
     user_config_file="${1:-${TO_USER_CONFIG_FILE}}"
 
