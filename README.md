@@ -242,7 +242,7 @@ Saved shortcuts:
 - While direct editing of `~/.to_dirs` is possible, using the `to --add` and `to --rm` commands ensures proper formatting and validation.
 - User preferences can be defined in `~/.to_zsh_config`:
 - `sort_order=added|alpha|recent` controls how shortcuts are listed and suggested.
-    If omitted, the default is `alpha`, listing shortcuts in natural (version-like) order when `sort -V` or `gsort -V` is available, otherwise lexicographically.
+    If omitted, the default is `added`, preserving the order in which shortcuts were saved.
     The `recent` option uses timestamps stored in `~/.to_dirs_recent` which are
     updated each time a shortcut is used.
   - Use `--sort <mode>` to change the sorting mode, which is written to `~/.to_zsh_config`.
