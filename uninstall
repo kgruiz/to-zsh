@@ -1,0 +1,41 @@
+set -euo pipefail
+
+zshrc="${HOME}/.zshrc"
+installDir="${HOME}/.config/zsh/plugins/to-zsh"
+targetScript="${installDir}/to.zsh"
+startMarker="# >>> to-zsh init >>>"
+endMarker="# <<< to-zsh init <<<"
+
+if [ ! -f "$zshrc" ]; then
+
+  echo "No ~/.zshrc found; nothing to remove." >&2
+  exit 1
+fi
+
+if ! grep -q "$startMarker" "$zshrc"; then
+
+  echo "to-zsh init block not found in ~/.zshrc; nothing to remove." >&2
+  exit 1
+fi
+
+if ! grep -q "$endMarker" "$zshrc"; then
+
+  echo "to-zsh init end marker not found in ~/.zshrc; aborting." >&2
+  exit 1
+fi
+
+tempFile="$(mktemp)"
+perl -0777 -pe "s|\n?$startMarker.*?$endMarker\n?||s" "$zshrc" > "$tempFile"
+mv "$tempFile" "$zshrc"
+
+if [ -f "$targetScript" ]; then
+
+  rm -f "$targetScript"
+fi
+
+if [ -d "$installDir" ] && [ -z "$(ls -A "$installDir")" ]; then
+
+  rmdir "$installDir"
+fi
+
+printf 'Removed to-zsh init block from %s and cleaned %s\n' "$zshrc" "$targetScript"
