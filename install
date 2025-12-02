@@ -9,6 +9,16 @@ endMarker="# <<< to-zsh init <<<"
 
 mkdir -p "$installDir"
 
+copyAction="installed"
+
+if [ -f "$targetScript" ]; then
+  if cmp -s "${scriptDir}/to.zsh" "$targetScript"; then
+    copyAction="unchanged"
+  else
+    copyAction="updated"
+  fi
+fi
+
 cp "${scriptDir}/to.zsh" "$targetScript"
 
 if [ ! -f "$zshrc" ]; then
@@ -59,7 +69,13 @@ else
   printf '\n%s\n' "$snippet" >> "$tempFile"
 fi
 
-mv "$tempFile" "$zshrc"
+if cmp -s "$tempFile" "$zshrc"; then
+  blockAction="unchanged"
+  rm "$tempFile"
+else
+  mv "$tempFile" "$zshrc"
+fi
 
+printf 'to-zsh script at %s (%s)\n' "$targetScript" "$copyAction"
 printf 'Ensured init block in %s (%s)\n' "$zshrc" "$blockAction"
 printf 'to-zsh installation complete.\n'
