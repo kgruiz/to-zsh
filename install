@@ -16,6 +16,9 @@ if [ ! -f "$zshrc" ]; then
   touch "$zshrc"
 fi
 
+printf 'Installing to-zsh from %s\n' "$scriptDir"
+printf 'Copying function script to %s\n' "$targetScript"
+
 snippet=$(cat <<'EOF'
 # >>> to-zsh init >>>
 autoload -Uz compinit
@@ -42,10 +45,12 @@ EOF
 
 escapedSnippet="$(printf '%s\n' "$snippet" | sed -e 's/[\\/&]/\\&/g')"
 tempFile="$(mktemp)"
+blockAction="added"
 
 if grep -q "$startMarker" "$zshrc"; then
 
   perl -0777 -pe "s|$startMarker.*?$endMarker|$escapedSnippet|s" "$zshrc" > "$tempFile"
+  blockAction="updated"
 
 else
 
@@ -56,4 +61,5 @@ fi
 
 mv "$tempFile" "$zshrc"
 
-printf 'Installed to-zsh script to %s and ensured init block in %s\n' "$targetScript" "$zshrc"
+printf 'Ensured init block in %s (%s)\n' "$zshrc" "$blockAction"
+printf 'to-zsh installation complete.\n'
