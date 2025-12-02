@@ -16,7 +16,7 @@ if [ ! -f "$zshrc" ]; then
   touch "$zshrc"
 fi
 
-read -r -d '' snippet <<EOF
+read -r -d '' snippet <<'EOF'
 # >>> to-zsh init >>>
 autoload -Uz compinit
 compinit
